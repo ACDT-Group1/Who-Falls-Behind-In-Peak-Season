@@ -335,6 +335,37 @@ summary{padding:12px var(--PAD)}
 @keyframes barUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @keyframes barText{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.grow .barlayer path,.grow .barlayer text{animation:none}}
+
+.hyp{display:flex;flex-direction:column;border:1px solid var(--hair);border-radius:var(--R);background:var(--panel)}
+.hrow{display:grid;grid-template-columns:44px 96px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px var(--PAD);border-bottom:1px dashed var(--hair)}
+.hrow:last-child{border-bottom:0}
+.hrow b{font-family:var(--mono);color:var(--flap);font-size:.95rem}
+.hrow code{font-family:var(--mono);font-size:.9rem;color:var(--chalk);white-space:nowrap}
+.hrow p{font-size:.95rem;line-height:1.45;color:#c9ccd3}
+.chip{font:700 .66rem var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:4px;white-space:nowrap;border:1px solid var(--hair);color:var(--dim)}
+.chip.yes{color:var(--ok);border-color:#3ddc8455}.chip.no{color:var(--dim)}
+@media (max-width:720px){.hrow{grid-template-columns:44px minmax(0,1fr)}.hrow p,.hrow .chip{grid-column:1/-1}.hrow .chip{justify-self:start}}
+.myscore{font:600 .74rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--flap)}
+.myths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--GAP)}
+.myth{background:var(--panel);border:1px solid var(--hair);border-radius:var(--R);padding:var(--PAD);display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .3s}
+.mq{font-family:var(--display);font-weight:600;font-size:1.25rem;line-height:1.2;color:var(--chalk)}
+.mbtn{display:flex;gap:8px}
+.mbtn button{flex:1;padding:9px;border-radius:6px;border:1px solid var(--hair);background:transparent;color:var(--chalk);font:700 .78rem var(--mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.mbtn button:hover{border-color:var(--flap)}
+.myth.open .mbtn button{cursor:default;opacity:.45}.myth.open .mbtn button[aria-pressed="true"]{opacity:1;border-color:var(--flap);color:var(--flap)}
+.mrev{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--hair);padding-top:10px;animation:revIn .45s ease-out}
+.mv{font:700 .8rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--flap)}
+.mrev p{font-size:.95rem;line-height:1.5;color:#c9ccd3}
+.mres{font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.myth.hit{border-color:#3ddc8466}.myth.hit .mres{color:var(--ok)}
+.myth.miss{border-color:#ffb81c66}.myth.miss .mres{color:var(--flap)}
+@keyframes revIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (max-width:720px){.myths{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.mrev{animation:none}}
+
+.ciwrap{display:flex;flex-direction:column;gap:var(--GAP)}
+.cihead{font:600 .72rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--flap);padding:4px 6px 0}
+.cihead small{font-size:.66rem;color:var(--dim);letter-spacing:.08em;margin-left:6px;text-transform:none}
 </style>
 </head>
 <body>
@@ -365,7 +396,7 @@ summary{padding:12px var(--PAD)}
     <a class="brow" href="#g2"><span class="wk">Design</span><span class="dest">Same airport · day · hour</span><span class="gate">G2</span><span class="st done">Set</span></a>
     <a class="brow" href="#g3"><span class="wk">Main</span><span class="dest">Peak months vs quiet months</span><span class="gate">G3</span><span class="st done">Landed</span></a>
     <a class="brow" href="#g4"><span class="wk">Secondary</span><span class="dest">Busier-than-usual days</span><span class="gate">G4</span><span class="st done">Landed</span></a>
-    <a class="brow" href="#g5"><span class="wk">Explore</span><span class="dest">Move the crowding</span><span class="gate">G5</span><span class="st boarding">Boarding</span></a>
+    <a class="brow" href="#g5"><span class="wk">Explore</span><span class="dest">Myth vs reality · explore</span><span class="gate">G5</span><span class="st boarding">Boarding</span></a>
     <a class="brow" href="#g6"><span class="wk">Checks</span><span class="dest">Robustness · DML · mechanism</span><span class="gate">G6</span><span class="st done">Landed</span></a>
     <a class="brow" href="#g7"><span class="wk">Route</span><span class="dest">How we got here</span><span class="gate">G7</span><span class="st info">Arrived</span></a>
     <div class="stats" aria-label="Main results">
@@ -376,6 +407,11 @@ summary{padding:12px var(--PAD)}
     <div class="prelim">BTS flight-level 2024 · 5.16M flights · 9 carriers · LCC − FSC share of arrivals ≥15 min late · same origin × date × hour</div>
   </div>
   <p class="lede" style="font-size:1.12rem;color:#c9ccd3">U.S. low-cost carriers (LCCs) arrive 15+ minutes late more often than full-service carriers (FSCs). We asked whether that gap widens in peak season, and moved from monthly totals to 5.16 million individual flights to compare like with like.</p>
+  <div class="hyp" aria-label="Hypotheses">
+    <div class="hrow"><b>H0</b><code>γ = 0</code><p>Within the same origin × date × hour cell, the LCC − FSC gap in arrivals 15+ minutes late is the same in peak and off-peak months.</p><span class="chip" id="hy0"></span></div>
+    <div class="hrow"><b>H1</b><code>γ &gt; 0</code><p>The gap is larger in peak months. One-sided permutation test over 126 labellings, α = 0.05, set before running.</p><span class="chip" id="hy1"></span></div>
+    <div class="hrow"><b>H1′</b><code>γ<sub>day</sub> &gt; 0</code><p>Secondary: the gap grows on days when the departure airport is busier than its usual same weekday.</p><span class="chip" id="hy2"></span></div>
+  </div>
 </header>
 
 <section id="g1">
@@ -445,7 +481,7 @@ summary{padding:12px var(--PAD)}
     <p id="vMain"></p>
   </div>
   <div class="chart"><div id="pMain" class="plot" style="height:280px"></div></div>
-  <p class="src">Same-cell gap = LCC − FSC delay rate compared inside each origin × date × hour cell, averaged with flight weights. Raw gap = no matching.</p>
+  <p class="src">Same-cell gap = LCC − FSC delay rate compared inside each origin × date × hour cell, averaged with flight weights, before destination controls. Raw gap = no matching. The β and γ cards below add destination airport, distance, weather and congestion, so their numbers differ from the bars.</p>
   <div class="cards c4" id="cMain"></div>
 </section>
 
@@ -465,7 +501,11 @@ summary{padding:12px var(--PAD)}
 <div class="lights" aria-hidden="true"></div>
 <section id="g5">
   <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G5</b><span>Now boarding · Explore</span></div>
-  <h2>Move the crowding and watch the gap</h2>
+  <h2>Myth or reality? Guess first</h2>
+  <p>Six things people say about low-cost airlines. Pick an answer, then see what 5.16 million flights say.</p>
+  <div class="myscore" id="myScore"></div>
+  <div class="myths" id="myths"></div>
+  <h3 style="margin-top:12px">Move the crowding and watch the gap</h3>
   <div class="panel">
     <div class="panel-ctl">
       <fieldset class="slider">
@@ -494,6 +534,14 @@ summary{padding:12px var(--PAD)}
 <section id="g6">
   <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G6</b><span>Checks</span></div>
   <h2>How solid is it?</h2>
+  <h3>95% confidence intervals</h3>
+  <p>Each dot is an estimate and each bar is its 95% confidence interval. A bar that crosses 0 means "no difference" cannot be ruled out.</p>
+  <div class="ciwrap">
+    <div class="chart"><div class="cihead">Peak-season effect γ <small>pp, peak minus off-peak</small></div><div id="ciA" class="plot"></div></div>
+    <div class="chart"><div class="cihead">Busy-day effect γ <small>pp per +10% busier than usual</small></div><div id="ciB" class="plot"></div></div>
+    <div class="chart"><div class="cihead">Baseline LCC − FSC gap β <small>pp</small></div><div id="ciC" class="plot"></div></div>
+  </div>
+  <p class="src">Permutation intervals: the set of effect sizes not rejected by the same 126-labelling permutation test (two-sided, 5%), so they account for having only nine carriers. DML intervals: estimate ± 1.96 × standard error clustered by date; these do not account for the small number of carriers and are narrower for that reason.</p>
   <h3>Peak months: every version shows no widening</h3>
   <div class="cards c3" id="chkM"></div>
   <h3>Busy days: every same-cell version shows widening</h3>
@@ -576,7 +624,7 @@ summary{padding:12px var(--PAD)}
       <div><span class="lbl">Flights</span><b>5.16M</b></div>
     </div>
     <div><span class="lbl">Passengers</span><div class="bp-names">Kim Ihwan · Kim Hyein · Shin Minji · Jung Jiwon · Lee Sanggyeol · Chang Hyukjun</div></div>
-    <div class="bp-foot"><span class="lbl">Code</span><a href="https://github.com/jiwon75614-spec/late-by-label">github.com/jiwon75614-spec/late-by-label</a></div>
+    <div class="bp-foot"><span class="lbl">Code</span><a href="https://github.com/ACDT-Group1/Who-Falls-Behind-In-Peak-Season">github.com/ACDT-Group1/Who-Falls-Behind-In-Peak-Season</a></div>
   </div>
   <div class="bp-stub">
     <span class="lbl">Group</span><b class="bp-big">G1</b>
@@ -590,7 +638,7 @@ summary{padding:12px var(--PAD)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
 <script>
-const D = {"fig":{"n_flights":5164360,"raw":1.096641888653263,"cell":2.5601603932109946,"coverage":0.8316329612962691,"raw_peak":0.15711249388486692,"cell_peak":2.170352202973193,"raw_off":1.7479384628209509,"cell_off":2.982120724297502,"bins":{"<-10%":{"raw":0.15027054622834157,"cell":1.198083487937005,"share":0.12042053613613303},"-10\u20130%":{"raw":0.961297803034487,"cell":2.686911454419303,"share":0.2973685025830887},"0\u2013+10%":{"raw":0.9557095367394908,"cell":2.448749186973898,"share":0.4434917395379098},">+10%":{"raw":2.57398125757323,"cell":3.8222592342996027,"share":0.13871922174286844}},"bdrop":{"none":{"<-10%":1.198083487937005,"-10\u20130%":2.686911454419303,"0\u2013+10%":2.448749186973898,">+10%":3.8222592342996027},"AA":{"<-10%":3.29728082981919,"-10\u20130%":4.542594750927723,"0\u2013+10%":4.458781727014006,">+10%":6.031002842599246},"AS":{"<-10%":1.504824515716496,"-10\u20130%":2.9200828875928013,"0\u2013+10%":2.5620734961376637,">+10%":3.9958270789956343},"B6":{"<-10%":0.6194276846942022,"-10\u20130%":2.331710442261162,"0\u2013+10%":2.3747252963644017,">+10%":3.5531563835232975},"DL":{"<-10%":-0.8022475760947365,"-10\u20130%":1.182617818591815,"0\u2013+10%":0.6697870053001375,">+10%":2.742657158539024},"F9":{"<-10%":0.7110297854004749,"-10\u20130%":1.9569339182761194,"0\u2013+10%":1.356447694213087,">+10%":2.667893982781546},"G4":{"<-10%":1.2026028995548095,"-10\u20130%":2.730012162854236,"0\u2013+10%":2.516308196397206,">+10%":3.897778831781991},"NK":{"<-10%":1.0947768415362091,"-10\u20130%":2.830986308936229,"0\u2013+10%":2.5421302399124657,">+10%":3.8710641930763},"UA":{"<-10%":0.7966891111840907,"-10\u20130%":2.072561167112637,"0\u2013+10%":1.9074886893516756,">+10%":2.9868572490483687},"WN":{"<-10%":3.834884608290668,"-10\u20130%":4.868856736065799,"0\u2013+10%":4.909201058248986,">+10%":6.082266809740666}},"pi_pct":[-0.106,-0.041,0.017,0.065,0.112],"carrier":{"pi0":{"AA":3.257,"AS":2.491,"B6":3.578,"DL":-2.512,"F9":7.688,"G4":0.784,"NK":1.888,"UA":-3.236,"WN":1.966},"pi15":{"AA":3.332,"AS":2.493,"B6":4.032,"DL":-2.319,"F9":9.119,"G4":1.547,"NK":3.048,"UA":-3.506,"WN":2.616}},"mo_perday":[17654.0,17904.0,19089.0,19407.0,19669.0,20371.0,20471.0,19969.0,19421.0,19855.0,19180.0,19051.0]},"A1":{"name":"A1_months_perday","n":2037682,"beta":4.643050471436295,"gamma":-1.3324853689731588,"p_beta_one":0.05555555555555555,"p_gamma_one":0.7857142857142857,"p_gamma_two":0.4444444444444444,"rank_gamma":99,"M_sd":0.49887524653879106,"loo":{"AA":{"beta":6.224,"gamma":-0.289},"AS":{"beta":4.916,"gamma":-1.527},"B6":{"beta":4.126,"gamma":-1.022},"DL":{"beta":3.695,"gamma":-1.658},"F9":{"beta":4.387,"gamma":-2.026},"G4":{"beta":4.622,"gamma":-1.287},"NK":{"beta":4.978,"gamma":-1.533},"UA":{"beta":3.569,"gamma":-1.495},"WN":{"beta":5.243,"gamma":-0.168}}},"A1t":{"name":"A1_months_total","n":2033691,"beta":3.852137577718125,"gamma":-0.8742951661648052,"p_beta_one":0.09523809523809523,"p_gamma_one":0.7063492063492064,"p_gamma_two":0.5714285714285714,"rank_gamma":89,"M_sd":0.49887034264055674,"loo":{"AA":{"beta":5.369,"gamma":-0.409},"AS":{"beta":4.137,"gamma":-1.086},"B6":{"beta":3.575,"gamma":-0.726},"DL":{"beta":2.58,"gamma":-0.218},"F9":{"beta":3.279,"gamma":-1.426},"G4":{"beta":3.856,"gamma":-0.858},"NK":{"beta":4.056,"gamma":-1.098},"UA":{"beta":3.157,"gamma":-1.34},"WN":{"beta":4.776,"gamma":0.344}}},"A2":{"name":"A2_PI_dow","n":4141960,"beta":3.8163143443001384,"gamma":5.071278363228197,"p_beta_one":0.1111111111111111,"p_gamma_one":0.007936507936507936,"p_gamma_two":0.015873015873015872,"rank_gamma":1,"M_sd":0.09646428422752873,"loo":{"AA":{"beta":5.652,"gamma":5.7},"AS":{"beta":4.017,"gamma":5.091},"B6":{"beta":3.706,"gamma":5.838},"DL":{"beta":2.85,"gamma":6.323},"F9":{"beta":2.859,"gamma":4.265},"G4":{"beta":3.841,"gamma":5.249},"NK":{"beta":4.216,"gamma":5.164},"UA":{"beta":2.726,"gamma":4.155},"WN":{"beta":4.924,"gamma":6.089}}},"A3":{"name":"A3_PI_all","n":4141960,"beta":3.779588128720731,"gamma":5.8289229823528705,"p_beta_one":0.1111111111111111,"p_gamma_one":0.023809523809523808,"p_gamma_two":0.047619047619047616,"rank_gamma":3,"M_sd":0.11480204232356199,"loo":{"AA":{"beta":5.613,"gamma":6.583},"AS":{"beta":3.98,"gamma":5.934},"B6":{"beta":3.662,"gamma":6.643},"DL":{"beta":2.818,"gamma":6.491},"F9":{"beta":2.827,"gamma":5.015},"G4":{"beta":3.804,"gamma":6.149},"NK":{"beta":4.179,"gamma":5.778},"UA":{"beta":2.69,"gamma":5.049},"WN":{"beta":4.876,"gamma":6.664}}},"Aw":{"beta":4.349281844929112,"gamma":4.615588489009149,"p_gamma_one":0.023809523809523808},"P9":{"beta":3.7716609565328287,"gamma":5.714018986356381,"p_gamma_one":0.007936507936507936},"cal":{"beta":4.299513170615169,"gamma":-1.4705576080594898,"p_gamma_two":0.5317460317460317},"w4":{"points":[{"ym":"2022-01","pi":-8.8,"gr":4.65,"gm":-4.52,"peak":false},{"ym":"2022-02","pi":-14.43,"gr":4.98,"gm":-6.6,"peak":false},{"ym":"2022-03","pi":-1.41,"gr":10.62,"gm":-5.64,"peak":false},{"ym":"2022-04","pi":-3.81,"gr":11.75,"gm":-6.97,"peak":false},{"ym":"2022-05","pi":0.55,"gr":5.66,"gm":-14.56,"peak":false},{"ym":"2022-06","pi":1.64,"gr":5.59,"gm":-15.34,"peak":false},{"ym":"2022-07","pi":6.3,"gr":5.96,"gm":-10.46,"peak":true},{"ym":"2022-08","pi":6.21,"gr":8.48,"gm":-11.25,"peak":true},{"ym":"2022-09","pi":0.23,"gr":7.87,"gm":-11.28,"peak":false},{"ym":"2022-10","pi":5.53,"gr":6.21,"gm":-15.79,"peak":false},{"ym":"2022-11","pi":1.9,"gr":4.88,"gm":-13.53,"peak":false},{"ym":"2022-12","pi":6.07,"gr":3.77,"gm":-6.67,"peak":true},{"ym":"2023-01","pi":-5.8,"gr":1.24,"gm":-6.09,"peak":false},{"ym":"2023-02","pi":-12.64,"gr":0.12,"gm":-11.14,"peak":false},{"ym":"2023-03","pi":0.9,"gr":4.48,"gm":-8.2,"peak":false},{"ym":"2023-04","pi":-2.14,"gr":6.21,"gm":-11.76,"peak":false},{"ym":"2023-05","pi":2.16,"gr":4.69,"gm":-15.05,"peak":false},{"ym":"2023-06","pi":1.76,"gr":5.12,"gm":-15.81,"peak":false},{"ym":"2023-07","pi":6.24,"gr":6.26,"gm":-13.0,"peak":true},{"ym":"2023-08","pi":6.3,"gr":5.2,"gm":-20.43,"peak":true},{"ym":"2023-09","pi":-1.13,"gr":5.66,"gm":-11.26,"peak":false},{"ym":"2023-10","pi":5.26,"gr":7.78,"gm":-11.01,"peak":true},{"ym":"2023-11","pi":-1.25,"gr":4.86,"gm":-7.95,"peak":false},{"ym":"2023-12","pi":0.35,"gr":5.71,"gm":-7.26,"peak":false},{"ym":"2024-01","pi":-6.97,"gr":1.3,"gm":-19.55,"peak":false},{"ym":"2024-02","pi":-11.53,"gr":2.8,"gm":-8.3,"peak":false},{"ym":"2024-03","pi":2.37,"gr":3.88,"gm":-6.73,"peak":false},{"ym":"2024-04","pi":-0.83,"gr":0.58,"gm":-7.99,"peak":false},{"ym":"2024-05","pi":4.26,"gr":0.09,"gm":-13.83,"peak":false},{"ym":"2024-06","pi":4.72,"gr":1.73,"gm":-13.22,"peak":true},{"ym":"2024-07","pi":8.61,"gr":-0.79,"gm":-24.27,"peak":true},{"ym":"2024-08","pi":4.56,"gr":0.08,"gm":-10.49,"peak":true},{"ym":"2024-09","pi":-2.4,"gr":0.5,"gm":-7.81,"peak":false},{"ym":"2024-10","pi":3.19,"gr":1.77,"gm":-7.0,"peak":false},{"ym":"2024-11","pi":-4.13,"gr":-0.6,"gm":-8.11,"peak":false},{"ym":"2024-12","pi":-1.84,"gr":1.33,"gm":-4.52,"peak":false}],"fits":{"gr":{"b0":4.178,"b1":0.067,"p":0.474,"r2":0.015},"gm":{"b0":-10.928,"b1":-0.342,"p":0.011,"r2":0.177}}},"dml":{"pi_dow_terciles":[-0.018822770565748215,0.04777594655752182],"off_months":{"theta":5.061994266058746,"se":0.4587893053367049,"n":300000,"r2_g":0.09289838648579796,"r2_m":0.6965952446448558},"peak_months":{"theta":4.054771237599853,"se":0.639624386925309,"n":300000,"r2_g":0.14030781090524125,"r2_m":0.7182451655743438},"quiet_days":{"theta":5.090566784112971,"se":0.3735158635705082,"n":300000,"r2_g":0.10004149739856472,"r2_m":0.6951612792247663},"busy_days":{"theta":4.906494861810561,"se":0.3854351699379708,"n":300000,"r2_g":0.11486890363445212,"r2_m":0.7048918541324163},"diff_months":{"diff":-1.0072230284588928,"se":0.7871511818201848,"z":-1.2795801514644498},"diff_days":{"diff":-0.18407192230240987,"se":0.5367256008091424,"z":-0.342953498072221}},"mechDesc":{"tercile_mean_PI":{"quiet":-0.09405671060085297,"busy":0.11741954833269119},"ground":{"all":{"LCC":{"median":50.0,"tight45":0.24357719569735503},"FSC":{"median":66.0,"tight45":0.04290167205806076}},"off_months":{"LCC":{"median":50.0,"tight45":0.2311678456657143},"FSC":{"median":67.0,"tight45":0.039950002192886275}},"peak_months":{"LCC":{"median":50.0,"tight45":0.2600404125484995},"FSC":{"median":65.0,"tight45":0.049601705817977015}},"quiet_days":{"LCC":{"median":50.0,"tight45":0.23639493933143294},"FSC":{"median":67.0,"tight45":0.039368277187097046}},"busy_days":{"LCC":{"median":50.0,"tight45":0.24598573546968702},"FSC":{"median":65.0,"tight45":0.05307065992018244}}},"legs":{"LCC":5.120441436767578,"FSC":4.088822364807129}},"terc":{"quiet":-0.09405671060085297,"busy":0.11741954833269119},"B6m":{"name":"B6_mech","n":4141960,"beta":4.338095277051845,"gamma":5.4479669649685185,"p_beta_one":0.0873015873015873,"p_gamma_one":0.007936507936507936,"p_gamma_two":0.015873015873015872,"rank_gamma":1,"M_sd":0.09646428422752873},"C7h":{"name":"C7_hour","n":4141960,"beta":3.855999386169074,"gamma":2.219064244001922,"p_beta_one":0.1111111111111111,"p_gamma_one":0.023809523809523808,"p_gamma_two":0.05555555555555555,"rank_gamma":3,"M_sd":0.16452649145325446},"C7w":{"name":"C7_wx","n":4070652,"beta":3.8635757907417925,"gamma":0.2960828735382742,"p_beta_one":0.1111111111111111,"p_gamma_one":0.3412698412698413,"p_gamma_two":0.6746031746031746,"rank_gamma":43,"M_sd":0.24182254117857002}};
+const D = {"fig":{"n_flights":5164360,"raw":1.096641888653263,"cell":2.5601603932109946,"coverage":0.8316329612962691,"raw_peak":0.15711249388486692,"cell_peak":2.170352202973193,"raw_off":1.7479384628209509,"cell_off":2.982120724297502,"bins":{"<-10%":{"raw":0.15027054622834157,"cell":1.198083487937005,"share":0.12042053613613303},"-10\u20130%":{"raw":0.961297803034487,"cell":2.686911454419303,"share":0.2973685025830887},"0\u2013+10%":{"raw":0.9557095367394908,"cell":2.448749186973898,"share":0.4434917395379098},">+10%":{"raw":2.57398125757323,"cell":3.8222592342996027,"share":0.13871922174286844}},"bdrop":{"none":{"<-10%":1.198083487937005,"-10\u20130%":2.686911454419303,"0\u2013+10%":2.448749186973898,">+10%":3.8222592342996027},"AA":{"<-10%":3.29728082981919,"-10\u20130%":4.542594750927723,"0\u2013+10%":4.458781727014006,">+10%":6.031002842599246},"AS":{"<-10%":1.504824515716496,"-10\u20130%":2.9200828875928013,"0\u2013+10%":2.5620734961376637,">+10%":3.9958270789956343},"B6":{"<-10%":0.6194276846942022,"-10\u20130%":2.331710442261162,"0\u2013+10%":2.3747252963644017,">+10%":3.5531563835232975},"DL":{"<-10%":-0.8022475760947365,"-10\u20130%":1.182617818591815,"0\u2013+10%":0.6697870053001375,">+10%":2.742657158539024},"F9":{"<-10%":0.7110297854004749,"-10\u20130%":1.9569339182761194,"0\u2013+10%":1.356447694213087,">+10%":2.667893982781546},"G4":{"<-10%":1.2026028995548095,"-10\u20130%":2.730012162854236,"0\u2013+10%":2.516308196397206,">+10%":3.897778831781991},"NK":{"<-10%":1.0947768415362091,"-10\u20130%":2.830986308936229,"0\u2013+10%":2.5421302399124657,">+10%":3.8710641930763},"UA":{"<-10%":0.7966891111840907,"-10\u20130%":2.072561167112637,"0\u2013+10%":1.9074886893516756,">+10%":2.9868572490483687},"WN":{"<-10%":3.834884608290668,"-10\u20130%":4.868856736065799,"0\u2013+10%":4.909201058248986,">+10%":6.082266809740666}},"pi_pct":[-0.106,-0.041,0.017,0.065,0.112],"carrier":{"pi0":{"AA":3.257,"AS":2.491,"B6":3.578,"DL":-2.512,"F9":7.688,"G4":0.784,"NK":1.888,"UA":-3.236,"WN":1.966},"pi15":{"AA":3.332,"AS":2.493,"B6":4.032,"DL":-2.319,"F9":9.119,"G4":1.547,"NK":3.048,"UA":-3.506,"WN":2.616}},"mo_perday":[17654.0,17904.0,19089.0,19407.0,19669.0,20371.0,20471.0,19969.0,19421.0,19855.0,19180.0,19051.0]},"A1":{"name":"A1_months_perday","n":2037682,"beta":4.643050471436295,"gamma":-1.3324853689731588,"p_beta_one":0.05555555555555555,"p_gamma_one":0.7857142857142857,"p_gamma_two":0.4444444444444444,"rank_gamma":99,"M_sd":0.49887524653879106,"loo":{"AA":{"beta":6.224,"gamma":-0.289},"AS":{"beta":4.916,"gamma":-1.527},"B6":{"beta":4.126,"gamma":-1.022},"DL":{"beta":3.695,"gamma":-1.658},"F9":{"beta":4.387,"gamma":-2.026},"G4":{"beta":4.622,"gamma":-1.287},"NK":{"beta":4.978,"gamma":-1.533},"UA":{"beta":3.569,"gamma":-1.495},"WN":{"beta":5.243,"gamma":-0.168}}},"A1t":{"name":"A1_months_total","n":2033691,"beta":3.852137577718125,"gamma":-0.8742951661648052,"p_beta_one":0.09523809523809523,"p_gamma_one":0.7063492063492064,"p_gamma_two":0.5714285714285714,"rank_gamma":89,"M_sd":0.49887034264055674,"loo":{"AA":{"beta":5.369,"gamma":-0.409},"AS":{"beta":4.137,"gamma":-1.086},"B6":{"beta":3.575,"gamma":-0.726},"DL":{"beta":2.58,"gamma":-0.218},"F9":{"beta":3.279,"gamma":-1.426},"G4":{"beta":3.856,"gamma":-0.858},"NK":{"beta":4.056,"gamma":-1.098},"UA":{"beta":3.157,"gamma":-1.34},"WN":{"beta":4.776,"gamma":0.344}}},"A2":{"name":"A2_PI_dow","n":4141960,"beta":3.8163143443001384,"gamma":5.071278363228197,"p_beta_one":0.1111111111111111,"p_gamma_one":0.007936507936507936,"p_gamma_two":0.015873015873015872,"rank_gamma":1,"M_sd":0.09646428422752873,"loo":{"AA":{"beta":5.652,"gamma":5.7},"AS":{"beta":4.017,"gamma":5.091},"B6":{"beta":3.706,"gamma":5.838},"DL":{"beta":2.85,"gamma":6.323},"F9":{"beta":2.859,"gamma":4.265},"G4":{"beta":3.841,"gamma":5.249},"NK":{"beta":4.216,"gamma":5.164},"UA":{"beta":2.726,"gamma":4.155},"WN":{"beta":4.924,"gamma":6.089}}},"A3":{"name":"A3_PI_all","n":4141960,"beta":3.779588128720731,"gamma":5.8289229823528705,"p_beta_one":0.1111111111111111,"p_gamma_one":0.023809523809523808,"p_gamma_two":0.047619047619047616,"rank_gamma":3,"M_sd":0.11480204232356199,"loo":{"AA":{"beta":5.613,"gamma":6.583},"AS":{"beta":3.98,"gamma":5.934},"B6":{"beta":3.662,"gamma":6.643},"DL":{"beta":2.818,"gamma":6.491},"F9":{"beta":2.827,"gamma":5.015},"G4":{"beta":3.804,"gamma":6.149},"NK":{"beta":4.179,"gamma":5.778},"UA":{"beta":2.69,"gamma":5.049},"WN":{"beta":4.876,"gamma":6.664}}},"Aw":{"beta":4.349281844929112,"gamma":4.615588489009149,"p_gamma_one":0.023809523809523808},"P9":{"beta":3.7716609565328287,"gamma":5.714018986356381,"p_gamma_one":0.007936507936507936},"cal":{"beta":4.299513170615169,"gamma":-1.4705576080594898,"p_gamma_two":0.5317460317460317,"p_gamma_one":0.746031746031746},"w4":{"points":[{"ym":"2022-01","pi":-8.8,"gr":4.65,"gm":-4.52,"peak":false},{"ym":"2022-02","pi":-14.43,"gr":4.98,"gm":-6.6,"peak":false},{"ym":"2022-03","pi":-1.41,"gr":10.62,"gm":-5.64,"peak":false},{"ym":"2022-04","pi":-3.81,"gr":11.75,"gm":-6.97,"peak":false},{"ym":"2022-05","pi":0.55,"gr":5.66,"gm":-14.56,"peak":false},{"ym":"2022-06","pi":1.64,"gr":5.59,"gm":-15.34,"peak":false},{"ym":"2022-07","pi":6.3,"gr":5.96,"gm":-10.46,"peak":true},{"ym":"2022-08","pi":6.21,"gr":8.48,"gm":-11.25,"peak":true},{"ym":"2022-09","pi":0.23,"gr":7.87,"gm":-11.28,"peak":false},{"ym":"2022-10","pi":5.53,"gr":6.21,"gm":-15.79,"peak":false},{"ym":"2022-11","pi":1.9,"gr":4.88,"gm":-13.53,"peak":false},{"ym":"2022-12","pi":6.07,"gr":3.77,"gm":-6.67,"peak":true},{"ym":"2023-01","pi":-5.8,"gr":1.24,"gm":-6.09,"peak":false},{"ym":"2023-02","pi":-12.64,"gr":0.12,"gm":-11.14,"peak":false},{"ym":"2023-03","pi":0.9,"gr":4.48,"gm":-8.2,"peak":false},{"ym":"2023-04","pi":-2.14,"gr":6.21,"gm":-11.76,"peak":false},{"ym":"2023-05","pi":2.16,"gr":4.69,"gm":-15.05,"peak":false},{"ym":"2023-06","pi":1.76,"gr":5.12,"gm":-15.81,"peak":false},{"ym":"2023-07","pi":6.24,"gr":6.26,"gm":-13.0,"peak":true},{"ym":"2023-08","pi":6.3,"gr":5.2,"gm":-20.43,"peak":true},{"ym":"2023-09","pi":-1.13,"gr":5.66,"gm":-11.26,"peak":false},{"ym":"2023-10","pi":5.26,"gr":7.78,"gm":-11.01,"peak":true},{"ym":"2023-11","pi":-1.25,"gr":4.86,"gm":-7.95,"peak":false},{"ym":"2023-12","pi":0.35,"gr":5.71,"gm":-7.26,"peak":false},{"ym":"2024-01","pi":-6.97,"gr":1.3,"gm":-19.55,"peak":false},{"ym":"2024-02","pi":-11.53,"gr":2.8,"gm":-8.3,"peak":false},{"ym":"2024-03","pi":2.37,"gr":3.88,"gm":-6.73,"peak":false},{"ym":"2024-04","pi":-0.83,"gr":0.58,"gm":-7.99,"peak":false},{"ym":"2024-05","pi":4.26,"gr":0.09,"gm":-13.83,"peak":false},{"ym":"2024-06","pi":4.72,"gr":1.73,"gm":-13.22,"peak":true},{"ym":"2024-07","pi":8.61,"gr":-0.79,"gm":-24.27,"peak":true},{"ym":"2024-08","pi":4.56,"gr":0.08,"gm":-10.49,"peak":true},{"ym":"2024-09","pi":-2.4,"gr":0.5,"gm":-7.81,"peak":false},{"ym":"2024-10","pi":3.19,"gr":1.77,"gm":-7.0,"peak":false},{"ym":"2024-11","pi":-4.13,"gr":-0.6,"gm":-8.11,"peak":false},{"ym":"2024-12","pi":-1.84,"gr":1.33,"gm":-4.52,"peak":false}],"fits":{"gr":{"b0":4.178,"b1":0.067,"p":0.474,"r2":0.015},"gm":{"b0":-10.928,"b1":-0.342,"p":0.011,"r2":0.177}}},"dml":{"pi_dow_terciles":[-0.018822770565748215,0.04777594655752182],"off_months":{"theta":5.061994266058746,"se":0.4587893053367049,"n":300000,"r2_g":0.09289838648579796,"r2_m":0.6965952446448558},"peak_months":{"theta":4.054771237599853,"se":0.639624386925309,"n":300000,"r2_g":0.14030781090524125,"r2_m":0.7182451655743438},"quiet_days":{"theta":5.090566784112971,"se":0.3735158635705082,"n":300000,"r2_g":0.10004149739856472,"r2_m":0.6951612792247663},"busy_days":{"theta":4.906494861810561,"se":0.3854351699379708,"n":300000,"r2_g":0.11486890363445212,"r2_m":0.7048918541324163},"diff_months":{"diff":-1.0072230284588928,"se":0.7871511818201848,"z":-1.2795801514644498},"diff_days":{"diff":-0.18407192230240987,"se":0.5367256008091424,"z":-0.342953498072221}},"mechDesc":{"tercile_mean_PI":{"quiet":-0.09405671060085297,"busy":0.11741954833269119},"ground":{"all":{"LCC":{"median":50.0,"tight45":0.24357719569735503},"FSC":{"median":66.0,"tight45":0.04290167205806076}},"off_months":{"LCC":{"median":50.0,"tight45":0.2311678456657143},"FSC":{"median":67.0,"tight45":0.039950002192886275}},"peak_months":{"LCC":{"median":50.0,"tight45":0.2600404125484995},"FSC":{"median":65.0,"tight45":0.049601705817977015}},"quiet_days":{"LCC":{"median":50.0,"tight45":0.23639493933143294},"FSC":{"median":67.0,"tight45":0.039368277187097046}},"busy_days":{"LCC":{"median":50.0,"tight45":0.24598573546968702},"FSC":{"median":65.0,"tight45":0.05307065992018244}}},"legs":{"LCC":5.120441436767578,"FSC":4.088822364807129}},"terc":{"quiet":-0.09405671060085297,"busy":0.11741954833269119},"B6m":{"name":"B6_mech","n":4141960,"beta":4.338095277051845,"gamma":5.4479669649685185,"p_beta_one":0.0873015873015873,"p_gamma_one":0.007936507936507936,"p_gamma_two":0.015873015873015872,"rank_gamma":1,"M_sd":0.09646428422752873},"C7h":{"name":"C7_hour","n":4141960,"beta":3.855999386169074,"gamma":2.219064244001922,"p_beta_one":0.1111111111111111,"p_gamma_one":0.023809523809523808,"p_gamma_two":0.05555555555555555,"rank_gamma":3,"M_sd":0.16452649145325446},"C7w":{"name":"C7_wx","n":4070652,"beta":3.8635757907417925,"gamma":0.2960828735382742,"p_beta_one":0.1111111111111111,"p_gamma_one":0.3412698412698413,"p_gamma_two":0.6746031746031746,"rank_gamma":43,"M_sd":0.24182254117857002},"ci":{"A1":{"name":"A1_months_perday","beta":4.643050471436279,"gamma":-1.332485368973365,"beta_ci":[-0.12033829721154429,10.014794856989264],"gamma_ci":[-4.704993177845859,2.876705918425376],"p_gamma_two_check":0.4444444444444444,"p_beta_two_check":0.05555555555555555},"A2":{"name":"A2_PI_dow","beta":3.816314344300243,"gamma":5.071278363227198,"beta_ci":[-2.011017441500825,10.321765985910371],"gamma_ci":[1.3270677316526103,13.003621234741164],"p_gamma_two_check":0.015873015873015872,"p_beta_two_check":0.2222222222222222},"C7h":{"name":"C7_hour","beta":3.8559993861690893,"gamma":2.2190642440014914,"beta_ci":[-1.9570718305558508,10.34310653941725],"gamma_ci":[-0.34702079024022076,6.118014749330343],"p_gamma_two_check":0.05555555555555555,"p_beta_two_check":0.2222222222222222},"C7w":{"name":"C7_wx","beta":3.863575790741751,"gamma":0.2960828735381522,"beta_ci":[-1.894430478361837,10.411796919349259],"gamma_ci":[-2.1012983272272248,2.3955631235077903],"p_gamma_two_check":0.6746031746031746,"p_beta_two_check":0.2222222222222222},"B6":{"name":"B6_mech","beta":4.338095277051701,"gamma":5.447966964967677,"beta_ci":[-1.5100241222573643,10.34819343726419],"gamma_ci":[1.7323991944174197,13.485682474203415],"p_gamma_two_check":0.015873015873015872,"p_beta_two_check":0.16666666666666666}}};
 const F=D.fig, A1=D.A1, A1T=D.A1t, A2=D.A2, A3=D.A3, AW=D.Aw, P9=D.P9, CAL=D.cal;
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -655,10 +703,10 @@ const io=new IntersectionObserver((ents)=>ents.forEach(e=>{if(!e.isIntersecting)
 setTimeout(()=>document.querySelectorAll('section[id^="g"]').forEach(s=>io.observe(s)),400);
 
 /* board */
-flapTo(document.getElementById('hM'),sgF(A1.gamma)+'PP'); document.getElementById('hMs').textContent=`not significant · p ${p2(A1.p_gamma_two)}`;
+flapTo(document.getElementById('hM'),sgF(A1.gamma)+'PP'); document.getElementById('hMs').textContent=`not significant · p ${p2(A1.p_gamma_one)} one-sided`;
 flapTo(document.getElementById('hD'),sgF(A2.gamma*0.1)+'PP'); document.getElementById('hDs').textContent=`significant · p ${p3(A2.p_gamma_one)}`;
 flapTo(document.getElementById('hB'),sgF(A1.beta)+'PP'); document.getElementById('hBs').textContent=`not significant across carriers · p ${p2(A1.p_beta_one)}`;
-document.getElementById('arrM').textContent=`γ ${sg(A1.gamma)} pp · p ${p2(A1.p_gamma_two)}`;
+document.getElementById('arrM').textContent=`γ ${sg(A1.gamma)} pp · p ${p2(A1.p_gamma_one)}`;
 document.getElementById('arrD').textContent=`${sg(A2.gamma*0.1)} pp per +10% · p ${p3(A2.p_gamma_one)}`;
 document.getElementById('arrB').textContent=`${sg(A1.beta)} pp · p ${p2(A1.p_beta_one)}`;
 
@@ -682,36 +730,69 @@ document.getElementById('chkMech').innerHTML=[['Median ground time',`${gL.median
   `<div class="card${i===3?' hot':''}"><span class="tag ${i===3?'g':'no'}">${c[0]}</span><b class="num">${c[1]}</b><span>${c[2]}</span></div>`).join('');
 document.getElementById('mechNote').textContent=`LCC aircraft turn faster and fly more legs a day. But adding scheduled ground time, first-flight-of-day and flights per aircraft-day to the model does not shrink the gap or its growth on busy days, so ground time does not explain the LCC disadvantage in our data. On busy days the share of tight turns rises slightly for both types (LCC ${(MD.ground.quiet_days.LCC.tight45*100).toFixed(0)}% → ${(MD.ground.busy_days.LCC.tight45*100).toFixed(0)}%, FSC ${(MD.ground.quiet_days.FSC.tight45*100).toFixed(0)}% → ${(MD.ground.busy_days.FSC.tight45*100).toFixed(0)}%).`;
 document.getElementById('arrG').textContent=`${gL.median.toFixed(0)} vs ${gF.median.toFixed(0)} min · β unchanged`;
+
+/* hypotheses */
+(function(){const set=(id,txt,ok)=>{const e=document.getElementById(id);e.textContent=txt;e.classList.add(ok?'yes':'no')};
+  set('hy0',`Not rejected · p ${p2(A1.p_gamma_one)}`,false);
+  set('hy1',`Not supported · γ ${sg(A1.gamma)} pp`,false);
+  set('hy2',`Supported (same-cell only) · p ${p3(A2.p_gamma_one)}`,true)})();
+
+/* myth vs reality: guess first, then reveal */
+(function(){const C=F.carrier.pi0, MD=D.mechDesc, BM=D.B6m, CW=D.C7w;
+  const MY=[
+   {q:'Low-cost airlines are late more often than full-service airlines.',ans:true,v:'Partly true',
+    e:`Week 3: +6.37 pp. Same airport, day and hour: ${sg(F.cell)} pp. But with only nine carriers the baseline gap is not clearly separable from carrier differences (permutation p = ${p2(A2.p_beta_one)}).`},
+   {q:'In peak season, low-cost airlines fall further behind.',ans:false,v:'Myth',
+    e:`Busiest vs quietest months: γ = ${sg(A1.gamma)} pp, one-sided permutation p = ${p2(A1.p_gamma_one)}. The gap does not widen.`},
+   {q:'They only look late because they fly from crowded airports at bad times.',ans:false,v:'Myth',
+    e:`Comparing within the same airport, day and hour makes the gap larger, not smaller: ${sg(F.raw)} → ${sg(F.cell)} pp.`},
+   {q:'Bad weather makes low-cost airlines fall apart.',ans:false,v:'Myth',
+    e:`Thunderstorm, snow, fog, low visibility or strong gusts at departure: γ = ${sg(CW.gamma)} pp, one-sided p = ${p2(CW.p_gamma_one)}.`},
+   {q:'They are late because they turn their planes around too fast.',ans:false,v:'Not the explanation',
+    e:`Turns are shorter (median ${MD.ground.all.LCC.median.toFixed(0)} vs ${MD.ground.all.FSC.median.toFixed(0)} min), but holding ground time fixed leaves the gap at ${sg(BM.beta)} pp (was ${sg(A2.beta)}).`},
+   {q:'All low-cost airlines are equally late.',ans:false,v:'Myth',
+    e:`Frontier ${sg(C.F9)} pp vs the FSC average, Allegiant ${sg(C.G4)}. American, a full-service carrier, is later (${sg(C.AA)}) than Southwest (${sg(C.WN)}).`}];
+  const box=document.getElementById('myths'),sc=document.getElementById('myScore');let done=0,right=0;
+  const score=()=>{sc.textContent=done?`${right} of ${done} guessed right · ${MY.length-done} left`:`${MY.length} statements · tap True or False`};
+  MY.forEach((m,i)=>{const c=document.createElement('div');c.className='myth';
+    c.innerHTML=`<span class="tag no">Statement ${i+1}</span><p class="mq">“${m.q}”</p>
+      <div class="mbtn"><button type="button" data-g="1">True</button><button type="button" data-g="0">False</button></div>
+      <div class="mrev" hidden><span class="mv">${m.v}</span><p>${m.e}</p><span class="mres"></span></div>`;
+    c.querySelectorAll('[data-g]').forEach(b=>b.addEventListener('click',()=>{if(c.classList.contains('open'))return;
+      const g=b.dataset.g==='1',ok=g===m.ans;c.classList.add('open',ok?'hit':'miss');b.setAttribute('aria-pressed','true');
+      c.querySelector('.mrev').hidden=false;c.querySelector('.mres').textContent=ok?'You called it':'Surprise';
+      done++;if(ok)right++;score()}));
+    box.appendChild(c)});score()})();
 document.getElementById('calG').textContent=sg(CAL.gamma); document.getElementById('calP').textContent=p2(CAL.p_gamma_two);
 
 /* main result text + cards */
 const [lm0,lm1]=looRange(A1,'gamma');
-document.getElementById('vMain').innerHTML=`In the three busiest months, the LCC − FSC gap is not larger than in the three quietest months. The estimate even points the other way (γ = ${sg(A1.gamma)} pp), and it is not statistically different from zero (permutation p = ${p2(A1.p_gamma_two)}). Peak season does not make low-cost carriers fall further behind.`;
-const cm=[['β · off-peak gap',sg(A1.beta)+' pp','Quiet months, same cell, all controls',`p = ${p2(A1.p_beta_one)} · not significant across carriers`,'no'],
- ['γ · extra in peak',sg(A1.gamma)+' pp','Busiest vs quietest months',`p = ${p2(A1.p_gamma_two)} two-sided`,'g'],
- ['Peak-month gap',sg(A1.beta+A1.gamma)+' pp','β + γ',`Not different from off-peak (p = ${p2(A1.p_gamma_two)})`,'no'],
+document.getElementById('vMain').innerHTML=`In the three busiest months, the LCC − FSC gap is not larger than in the three quietest months. The estimate even points the other way (γ = ${sg(A1.gamma)} pp), and it is not statistically different from zero (one-sided permutation p = ${p2(A1.p_gamma_one)}; two-sided ${p2(A1.p_gamma_two)}). H0 is not rejected. Peak season does not make low-cost carriers fall further behind.`;
+const cm=[['β · off-peak gap',sg(A1.beta)+' pp','Quiet months, same cell, all controls',`Permutation test · p = ${p2(A1.p_beta_one)} one-sided · not clear`,'no'],
+ ['γ · extra in peak',sg(A1.gamma)+' pp','Busiest vs quietest months',`Permutation test, 126 labellings · p = ${p2(A1.p_gamma_one)} one-sided`,'g'],
+ ['Peak-month gap',sg(A1.beta+A1.gamma)+' pp','β + γ',`Not different from off-peak (p = ${p2(A1.p_gamma_one)})`,'no'],
  ['Drop one carrier',`${sg(lm0)} to ${sg(lm1)}`,'γ in 9 runs','Negative every time','no']];
 document.getElementById('cMain').innerHTML=cm.map((c,i)=>`<div class="card${i===1?' hot':''}"><span class="tag ${c[4]}">${c[0]}</span><b class="num">${c[1]}</b><span>${c[2]}</span><span class="read">${c[3]}</span></div>`).join('');
 
 /* secondary result text + cards */
 const g10=A2.gamma*0.1, g15=A2.gamma*0.15, [ld0,ld1]=looRange(A2,'gamma',0.1);
 document.getElementById('vSec').innerHTML=`When the departure airport is busier than its usual same weekday, the gap grows: <strong>${sg(g10)} pp for every 10% busier</strong> (permutation p = ${p3(A2.p_gamma_one)} one-sided, ${p3(A2.p_gamma_two)} two-sided; the real LCC labelling ranks first of 126). On a day 15% busier than usual, the gap grows by about ${g15.toFixed(2)} pp: clear statistically, but small next to the ${A2.beta.toFixed(2)} pp baseline. A DML check without same-cell matching does not confirm it (G6).`;
-const cs=[['β · usual day',sg(A2.beta)+' pp','Peak Index = 0',`p = ${p2(A2.p_beta_one)} · not significant across carriers`,'no'],
- ['γ · per +10%',sg(g10)+' pp','Weekday-adjusted, all carriers',`p = ${p3(A2.p_gamma_one)} · rank ${A2.rank_gamma}/126`,'g'],
+const cs=[['β · usual day',sg(A2.beta)+' pp','Peak Index = 0',`Permutation test · p = ${p2(A2.p_beta_one)} one-sided · not clear`,'no'],
+ ['γ · per +10%',sg(g10)+' pp','Weekday-adjusted, all carriers',`Permutation test, 126 labellings · p = ${p3(A2.p_gamma_one)} one-sided · rank ${A2.rank_gamma}`,'g'],
  ['15% busier day',sg(A2.beta+g15)+' pp','β + 0.15 γ',`+${g15.toFixed(2)} pp on the baseline`,'no'],
  ['Drop one carrier',`${sg(ld0)} to ${sg(ld1)}`,'γ per +10% in 9 runs','Positive every time','ok']];
 document.getElementById('cSec').innerHTML=cs.map((c,i)=>`<div class="card${i===1?' hot':''}"><span class="tag ${c[4]}">${c[0]}</span><b class="num">${c[1]}</b><span>${c[2]}</span><span class="read">${c[3]}</span></div>`).join('');
 
 /* checks */
-const chkM=[['Main','Top vs bottom 3 months by flights per day',A1.gamma,A1.p_gamma_two],
- ['Total flights','Top vs bottom 3 by monthly total (Jul Aug Oct vs Jan Feb Nov)',A1T.gamma,A1T.p_gamma_two],
- ['First definition','Jul, Dec vs Jan, Apr',CAL.gamma,CAL.p_gamma_two]];
-document.getElementById('chkM').innerHTML=chkM.map(c=>`<div class="card"><span class="tag no">${c[0]}</span><b class="num">${sg(c[2])} pp</b><span>${c[1]}</span><span class="read">p = ${p2(c[3])} two-sided</span></div>`).join('');
+const chkM=[['Main','Top vs bottom 3 months by flights per day',A1.gamma,A1.p_gamma_one],
+ ['Total flights','Top vs bottom 3 by monthly total (Jul Aug Oct vs Jan Feb Nov)',A1T.gamma,A1T.p_gamma_one],
+ ['First definition','Jul, Dec vs Jan, Apr',CAL.gamma,CAL.p_gamma_one]];
+document.getElementById('chkM').innerHTML=chkM.map(c=>`<div class="card"><span class="tag no">${c[0]}</span><b class="num">${sg(c[2])} pp</b><span>${c[1]}</span><span class="read">Permutation p = ${p2(c[3])} one-sided</span></div>`).join('');
 const chkD=[['Main','Weekday-adjusted, all carriers',A2.gamma,A2.p_gamma_one],
  ['No weekday adjustment','All carriers',A3.gamma,A3.p_gamma_one],
  ['+ LCC × weekday','Unadjusted index, weekday interactions added',AW.gamma,AW.p_gamma_one],
  ['Nine carriers only','First version of the index',P9.gamma,P9.p_gamma_one]];
-document.getElementById('chkD').innerHTML=chkD.map(c=>`<div class="card"><span class="tag ok">${c[0]}</span><b class="num">${sg(c[2]*0.1)} pp</b><span>${c[1]}</span><span class="read">p = ${p3(c[3])} one-sided</span></div>`).join('');
+document.getElementById('chkD').innerHTML=chkD.map(c=>`<div class="card"><span class="tag ok">${c[0]}</span><b class="num">${sg(c[2]*0.1)} pp</b><span>${c[1]}</span><span class="read">Permutation p = ${p3(c[3])} one-sided</span></div>`).join('');
 
 /* plots */
 const cfg={displayModeBar:false,responsive:true};
@@ -776,8 +857,34 @@ document.querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>
   new IntersectionObserver((e,ob)=>{if(!e[0].isIntersecting)return;ob.disconnect();bp.classList.add('in');
     const pl=document.getElementById('bpPlane'),fly=document.getElementById('bpFly');
     if(fly&&fly.beginElement){pl.setAttribute('transform','');setTimeout(()=>fly.beginElement(),350)}},{threshold:.35}).observe(bp)})();
+
+/* confidence-interval coefficient plots */
+function drawCI(){const CI=D.ci,DM=D.dml;
+  const rowsA=[['Peak months (main)',A1.gamma,CI.A1.gamma_ci,'perm'],
+    ['Severe weather at departure',CI.C7w.gamma,CI.C7w.gamma_ci,'perm'],
+    ['DML: peak − off-peak months',DM.diff_months.diff,[DM.diff_months.diff-1.96*DM.diff_months.se,DM.diff_months.diff+1.96*DM.diff_months.se],'dml'],
+    ['DML: busiest − quietest third of days',DM.diff_days.diff,[DM.diff_days.diff-1.96*DM.diff_days.se,DM.diff_days.diff+1.96*DM.diff_days.se],'dml']];
+  const rowsB=[['Busy day (main)',A2.gamma/10,CI.A2.gamma_ci.map(x=>x/10),'perm'],
+    ['Busy day, ground time held fixed',CI.B6.gamma/10,CI.B6.gamma_ci.map(x=>x/10),'perm'],
+    ['Crowded hour',CI.C7h.gamma/10,CI.C7h.gamma_ci.map(x=>x/10),'perm']];
+  const rowsC=[['Off-peak months',A1.beta,CI.A1.beta_ci,'perm'],['Usual day',A2.beta,CI.A2.beta_ci,'perm'],
+    ['DML: off-peak months',DM.off_months.theta,[DM.off_months.theta-1.96*DM.off_months.se,DM.off_months.theta+1.96*DM.off_months.se],'dml'],
+    ['DML: peak months',DM.peak_months.theta,[DM.peak_months.theta-1.96*DM.peak_months.se,DM.peak_months.theta+1.96*DM.peak_months.se],'dml']];
+  const one=(id,rows)=>{const r=[...rows].reverse(),sig=r.map(x=>x[2][0]>0||x[2][1]<0);
+    const lab=r.map(x=>x[0]+(x[3]==='dml'?' ·':'')),col=sig.map(v=>v?css('--flap'):css('--dim'));
+    const lo=Math.min(0,...r.map(x=>x[2][0])),hi=Math.max(0,...r.map(x=>x[2][1])),pad=(hi-lo)*.12;
+    const el=document.getElementById(id);el.style.height=(r.length*48+56)+'px';
+    Plotly.react(id,[{type:'scatter',mode:'markers',y:lab,x:r.map(x=>x[1]),
+      error_x:{type:'data',symmetric:false,array:r.map(x=>x[2][1]-x[1]),arrayminus:r.map(x=>x[1]-x[2][0]),color:css('--chalk'),thickness:2,width:6},
+      marker:{size:11,color:col,line:{width:1.5,color:css('--night')}},
+      customdata:r.map(x=>[x[2][0],x[2][1],x[3]==='dml'?'DML, date-clustered SE':'Permutation test inversion']),
+      hovertemplate:'%{y}<br>%{x:.2f} pp<br>95% CI [%{customdata[0]:.2f}, %{customdata[1]:.2f}]<br>%{customdata[2]}<extra></extra>'}],
+      base({showlegend:false,margin:{l:Math.round(Math.min(236,Math.max(128,el.clientWidth*.42))),r:20,t:8,b:36},
+        xaxis:{...base().xaxis,range:[lo-pad,hi+pad],zeroline:true,zerolinecolor:css('--flap'),zerolinewidth:1.5},
+        yaxis:{...base().yaxis,gridcolor:'rgba(0,0,0,0)',tickfont:{color:css('--chalk'),family:'Barlow, sans-serif',size:el.clientWidth<520?11:13}}}),cfg)};
+  one('ciA',rowsA);one('ciB',rowsB);one('ciC',rowsC)}
 drawSlider();
-if(window.Plotly){drawMo();drawMain();drawBins();drawCar();drawDrop()}
+if(window.Plotly){drawCI();drawMo();drawMain();drawBins();drawCar();drawDrop()}
 </script>
 </body>
 </html>
