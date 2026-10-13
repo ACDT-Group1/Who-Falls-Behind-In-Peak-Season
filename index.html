@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="ACDT Group 1: low-cost vs full-service airlines. Who falls behind in peak season?">
+<title>Who Falls Behind in Peak Season?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* Layout: an airport terminal at night. A split-flap departure board opens the page and doubles as the table of contents;
+   sections are "gates" with black-on-yellow wayfinding signs; numbers that change flip like Solari flaps.
+   Deliberately single dark theme (departure boards are always dark). */
+:root{
+  color-scheme:dark;
+  --night:#0A0C10; --panel:#12151B; --tile:#1B1F27; --hair:#262B35;
+  --chalk:#ECEDE8; --dim:#878E9C; --flap:#FFB81C; --sign:#FFC20E;
+  --lcc:#FF6B3D; --fsc:#4FC3F7; --peak:#FF6B3D; --off:#4FC3F7;
+  --ok:#3DDC84; --ns:#5A6170; --late:#FF4D4D;
+  --conf:#3B3218; --med:#173426; --mod:#2C2645; --cause:#16304A; --out:#41201C; --fb:#20252E;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--night);color:var(--chalk);font-family:var(--body);font-size:17px;line-height:1.6;
+  background-image:radial-gradient(1200px 500px at 50% -120px,#1a1f2a 0%,transparent 70%)}
+.wrap{max-width:880px;margin:0 auto;padding-inline:20px;padding-block:28px 72px;display:flex;flex-direction:column;gap:72px}
+h1,h2,h3{font-family:var(--display);line-height:1.04;text-wrap:balance;margin:0}
+h1{font-size:clamp(3rem,9vw,5.6rem);font-weight:700;letter-spacing:.005em}
+h2{font-size:clamp(1.9rem,4.4vw,2.6rem);font-weight:600}
+h3{font-size:1.35rem;font-weight:600}
+p{margin:0;max-width:64ch}
+.src{font-size:.82rem;color:var(--dim);max-width:72ch}
+strong{color:#fff;font-weight:600}
+.subq{font-family:var(--display);font-weight:500;font-size:clamp(1.35rem,3.2vw,1.85rem);line-height:1.25;color:#d5d7dc;max-width:34ch}
+.subq em{font-style:normal;color:var(--flap)}
+
+/* ---------- Departure board ---------- */
+.board{background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:18px 18px 12px;box-shadow:0 30px 80px -40px #000,inset 0 1px 0 #ffffff0d}
+.board-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--hair);padding-bottom:12px;margin-bottom:6px}
+.board-top .ttl{font-family:var(--display);font-weight:700;font-size:1.6rem;letter-spacing:.14em;color:var(--sign)}
+.board-top .ttl small{font-size:.9rem;color:var(--dim);letter-spacing:.1em;margin-left:10px}
+#clock{font-family:var(--mono);color:var(--flap);font-size:1.1rem;font-variant-numeric:tabular-nums}
+.brow{display:grid;grid-template-columns:96px minmax(0,1fr) 56px 150px;gap:14px;align-items:center;padding:9px 6px;border-bottom:1px dashed var(--hair);text-decoration:none;font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;border-radius:4px}
+a.brow:hover,a.brow:focus-visible{background:#ffffff08;outline:none}
+.brow.head{color:var(--dim);font-size:.7rem;letter-spacing:.16em;border-bottom:1px solid var(--hair)}
+.brow .wk{color:var(--flap)} .brow .dest{color:var(--chalk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .brow .gate{color:var(--flap);text-align:center}
+.st{font-size:.76rem;font-weight:700;letter-spacing:.12em}
+.st.done{color:var(--ok)} .st.board{color:var(--flap)} .st.wait{color:var(--late);animation:blink 1.4s steps(2,start) infinite} .st.info{color:var(--dim)}
+@keyframes blink{to{visibility:hidden}}
+.flaps{display:inline-flex;gap:3px}
+.flaps i{font-style:normal;position:relative;display:inline-grid;place-items:center;min-width:.78em;padding:.08em .06em;background:linear-gradient(#20252e 0 49%,#16191f 51% 100%);border-radius:3px;color:var(--flap);font-family:var(--mono);font-weight:700;box-shadow:inset 0 -1px 0 #000,0 1px 0 #ffffff0a}
+.flaps i::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#05060899}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+.stat{display:flex;flex-direction:column;gap:8px;min-width:0}
+.stat span:first-child{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+.stat .flaps{font-size:clamp(1.2rem,3.8vw,2rem)}
+.stat.pk .flaps i{color:var(--peak)} .stat.op .flaps i{color:var(--off)}
+.prelim{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-top:10px}
+
+/* ---------- Gate signage ---------- */
+.gate-sign{display:inline-flex;align-items:stretch;align-self:flex-start;font-family:var(--display);font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;overflow:hidden;font-size:1.05rem}
+.gate-sign b{background:var(--sign);color:#111;padding:4px 12px;display:flex;align-items:center;gap:8px}
+.gate-sign b svg{width:16px;height:16px}
+.gate-sign span{background:#111;color:var(--sign);padding:4px 12px;border:2px solid var(--sign);border-left:0;border-radius:0 4px 4px 0}
+section{display:flex;flex-direction:column;gap:20px;scroll-margin-top:20px}
+
+/* ---------- Model + design ---------- */
+.eq{background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:18px}
+.eq code{font-family:var(--mono);font-size:clamp(.82rem,2.2vw,1rem);line-height:1.9;color:var(--chalk);overflow-x:auto;white-space:nowrap;display:block}
+.eq code .g{color:var(--flap);font-weight:700} .eq code .b{color:var(--fsc);font-weight:700}
+.coef{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.coef div{border-top:2px solid var(--hair);padding-top:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.coef b{font-family:var(--mono);font-size:1.2rem}
+.coef div.key{border-top-color:var(--flap)} .coef div.key b{color:var(--flap)}
+.coef span{font-size:.92rem;color:#c9ccd3}
+.sub{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.sub div{border:1px solid var(--hair);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.sub .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--flap);text-transform:uppercase}
+.cellrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.cellrow div{background:var(--panel);border:1px solid var(--hair);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cellrow span{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.cellrow .flaps{font-size:1.05rem;flex-wrap:wrap}
+.months{display:flex;gap:6px;flex-wrap:wrap}
+.months span{font-family:var(--mono);font-size:.78rem;padding:4px 8px;border-radius:3px;background:var(--tile);color:var(--ns)}
+.months span.pk{background:var(--peak);color:#111;font-weight:700} .months span.op{background:var(--off);color:#111;font-weight:700}
+
+.tbl{overflow-x:auto;border:1px solid var(--hair);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px dashed var(--hair);vertical-align:top}
+td{white-space:normal} td:first-child{white-space:nowrap}
+th{font:600 .68rem var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.14em;border-bottom:1px solid var(--hair);white-space:nowrap}
+td.num{font-family:var(--mono);font-size:.85rem;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.tag{font:700 .7rem var(--mono);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.tag.ok{color:var(--ok)} .tag.no{color:var(--ns)} .tag.ban{color:var(--late)} .tag.g{color:var(--flap)}
+
+/* ---------- Charts + controls ---------- */
+.chart{background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:10px;min-width:0}
+.plot{width:100%;height:340px}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+.seg{display:inline-flex;border:1px solid var(--hair);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{background:transparent;color:var(--dim);border:0;padding:8px 13px;font:600 .76rem var(--mono);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.seg button+button{border-left:1px solid var(--hair)}
+.seg button[aria-pressed="true"]{background:var(--flap);color:#111}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--sign);outline-offset:2px}
+.key{display:flex;gap:18px;flex-wrap:wrap;font-size:.85rem;color:var(--dim)}
+.key i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.panel{display:grid;grid-template-columns:minmax(0,250px) minmax(0,1fr);gap:22px;align-items:start;background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:18px}
+.panel-ctl{display:flex;flex-direction:column;gap:18px}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;min-width:0}
+legend{font:600 .68rem var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;padding:0}
+fieldset label{display:flex;gap:10px;align-items:center;font-size:.98rem;cursor:pointer}
+fieldset input{width:17px;height:17px;accent-color:var(--flap)}
+.locked{color:var(--ns);cursor:not-allowed!important}
+.locked em{font:600 .62rem var(--mono);font-style:normal;letter-spacing:.08em;color:var(--late);border:1px solid #ff4d4d55;border-radius:3px;padding:1px 5px;text-transform:uppercase}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:600 .72rem var(--mono);letter-spacing:.04em;border-radius:3px;padding:5px 8px;cursor:pointer;border:1px solid var(--c);background:var(--c);color:#111}
+.chips button[aria-pressed="false"]{background:transparent;color:var(--ns);border-color:var(--hair);text-decoration:line-through}
+.panel-out{display:flex;flex-direction:column;gap:14px;min-width:0}
+.readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.readout div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.readout span:first-child{font:600 .62rem var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.readout .flaps{font-size:clamp(1rem,2.6vw,1.3rem)}
+#rPk i{color:var(--peak)} #rOp i{color:var(--off)}
+.panel .chart{background:var(--night)}
+
+.pending{border:1px dashed #ff4d4d66;border-radius:10px;padding:22px;display:flex;flex-direction:column;gap:16px;background:repeating-linear-gradient(-45deg,transparent 0 14px,#ffffff04 14px 28px)}
+ol.steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:7px;max-width:66ch}
+ol.steps li::marker{font-family:var(--mono);color:var(--flap)}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.rules div{border:1px solid var(--hair);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0;background:var(--panel)}
+.rules b{font-family:var(--mono);color:var(--flap);font-size:.9rem}
+.rules span{font-size:.92rem;color:#c9ccd3}
+ul.lim{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:7px;max-width:66ch}
+.hist{display:flex;flex-direction:column;border:1px solid var(--hair);border-radius:8px;background:var(--panel)}
+.hist .brow{grid-template-columns:72px minmax(0,1fr) minmax(0,1.3fr);text-transform:none;letter-spacing:0;font-size:.85rem}
+.hist .brow .wk{text-transform:uppercase;letter-spacing:.06em}
+.hist .brow .res{color:#c9ccd3;font-family:var(--body);font-size:.95rem}
+details{border:1px solid var(--hair);border-radius:8px;background:var(--panel)}
+summary{cursor:pointer;padding:12px 16px;font:600 .78rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--flap)}
+details[open] summary{border-bottom:1px solid var(--hair)}
+details .inner{padding:16px;display:flex;flex-direction:column;gap:16px}
+details .chart{background:var(--night)}
+.mapbox svg{width:100%;height:auto;display:block}
+.mapnote{min-height:3.4em;font-size:.95rem;border-left:3px solid var(--flap);padding:4px 0 4px 14px;color:var(--dim)}
+.mapnote strong{color:var(--chalk)}
+.edge{cursor:pointer;outline:none}
+
+.pass{display:grid;grid-template-columns:minmax(0,1fr) 170px;background:#EDEAE0;color:#16181d;border-radius:12px;overflow:hidden}
+.pass .main{padding:18px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pass .stub{padding:18px;border-left:2px dashed #16181d44;display:flex;flex-direction:column;gap:6px;justify-content:center;background:#E3DFD2}
+.pass .lbl{font:600 .62rem var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#6a6658}
+.pass .val{font-family:var(--display);font-weight:600;font-size:1.15rem;line-height:1.25}
+.pass .row{display:flex;gap:28px;flex-wrap:wrap}
+.pass .code{font-family:var(--display);font-weight:700;font-size:2.2rem;letter-spacing:.04em}
+
+@media (max-width:720px){.panel{grid-template-columns:1fr}.rules,.coef{grid-template-columns:1fr}.cellrow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){
+  .brow{grid-template-columns:70px minmax(0,1fr) 108px;gap:10px;font-size:.78rem}
+  .brow .gate{display:none}
+  .hist .brow{grid-template-columns:52px minmax(0,1fr)}
+  .hist .brow .dest{display:none}
+  .stats,.sub{grid-template-columns:1fr}
+  .plot{height:300px}
+  .pass{grid-template-columns:1fr}.pass .stub{border-left:0;border-top:2px dashed #16181d44}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.st.wait{animation:none}}
+
+/* v5: atmosphere, hero, scroll story */
+:root{--lcc:#FFB81C;--fsc:#3DDC84;--peak:#FFB81C;--off:#3DDC84}
+html,body{overflow-x:clip}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.hero{position:relative;display:flex;flex-direction:column;gap:26px;padding-block:28px 8px;isolation:isolate}
+.hero canvas{position:absolute;left:50%;transform:translateX(-50%);top:-28px;width:100vw;height:calc(100% + 260px);z-index:-1;opacity:.8;pointer-events:none;-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+.flight-line{font-family:var(--mono);font-size:.72rem;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.flight-line b{color:var(--flap);font-weight:700}
+.flight-line i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+h1.giant{display:flex;flex-direction:column;gap:clamp(4px,.8vw,8px);font-size:clamp(1.05rem,5.1vw,3rem);margin:0}
+h1.giant .flaps{gap:clamp(2px,.35vw,4px);flex-wrap:nowrap}
+h1.giant .flaps i{min-width:.8em;padding:.1em .07em;border-radius:4px;box-shadow:inset 0 -1px 0 #000,0 2px 0 #00000080,0 1px 0 #ffffff0a}
+h1.giant .l-lcc i{color:var(--lcc)} h1.giant .l-w i{color:var(--chalk)}
+.lights{display:flex;align-items:center;gap:clamp(6px,1.6vw,14px);justify-content:center;padding-block:6px}
+.lights i{width:7px;height:7px;border-radius:50%;background:#5a4a1e;box-shadow:0 0 0 0 transparent;flex:none;animation:rabbit var(--dur,1.76s) linear infinite;animation-delay:calc(var(--k) * 0.08s)}
+.lights i.th{background:var(--ok);box-shadow:0 0 10px var(--ok);animation:none;width:9px;height:9px}
+.lights svg{width:22px;height:22px;flex:none;margin-left:6px;filter:drop-shadow(0 0 6px #ffb81c88)}
+@keyframes rabbit{0%{background:#fff6d8;box-shadow:0 0 14px 3px #ffd36acc}18%,100%{background:#5a4a1e;box-shadow:0 0 4px #ffb81c55}}
+@media (prefers-reduced-motion:reduce){.lights i{animation:none;background:var(--flap);box-shadow:0 0 6px #ffb81c99}}
+ul.lim{max-width:none}
+ul.lim li{max-width:none}
+.nextdep{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--hair);border-radius:6px;padding:9px 14px;font:600 .74rem var(--mono);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--chalk)}
+.nextdep:hover,.nextdep:focus-visible{border-color:var(--flap);outline:none}
+.nextdep .k{color:var(--dim)} .nextdep .g{color:var(--flap)} .nextdep .st{margin-left:auto} h1.giant .l-fsc i{color:var(--fsc)} h1.giant .l-q i{color:var(--flap)}
+.runway-rule{height:14px;background:repeating-linear-gradient(90deg,var(--hair) 0 38px,transparent 38px 64px);mask:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);opacity:.9;border-radius:2px}
+.runway-rule.amber{background:repeating-linear-gradient(90deg,#ffb81c55 0 38px,transparent 38px 64px)}
+/* flight progress rail */
+.rail{position:fixed;left:max(12px,calc(50% - 560px));top:50%;transform:translateY(-50%);height:min(70vh,560px);width:28px;z-index:40;display:none}
+.rail .track{position:absolute;left:13px;top:0;bottom:0;border-left:2px dashed var(--hair)}
+.rail a{position:absolute;left:5px;width:18px;height:18px;border-radius:50%;background:var(--night);border:2px solid var(--hair);transform:translateY(-50%);
+  font:700 0px var(--mono);text-decoration:none}
+.rail a.on{border-color:var(--flap);background:var(--flap)}
+.rail a span{position:absolute;left:24px;top:50%;transform:translateY(-50%);font:600 .62rem var(--mono);letter-spacing:.1em;color:var(--dim);white-space:nowrap}
+.rail a.on span{color:var(--flap)}
+.rail .plane{position:absolute;left:3px;width:22px;height:22px;transform:translateY(-50%);transition:top .25s ease-out;filter:drop-shadow(0 0 6px #ffb81c99)}
+@media (min-width:1220px){.rail{display:block}}
+.topbar{position:fixed;left:0;right:0;top:0;height:calc(3px + env(safe-area-inset-top,0px));z-index:45;background:transparent}
+.topbar b{display:block;height:3px;margin-top:env(safe-area-inset-top,0px);background:linear-gradient(90deg,var(--off),var(--flap),var(--peak));width:0;transition:width .2s}
+@media (min-width:1220px){.topbar{display:none}}
+/* scroll reveal: elements are visible at rest; the effect only adds a short slide */
+.gate-sign{transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s}
+section.seen .gate-sign{box-shadow:0 0 0 1px #ffc20e33,0 0 24px -6px #ffc20e88}
+@media (prefers-reduced-motion:reduce){.flight-line i{animation:none}.rail .plane{transition:none}}
+/* boarding pass */
+.bp{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 150px;width:100%;max-width:620px;margin-inline:auto;background:linear-gradient(180deg,#F3EFE4,#E9E4D6);color:#16181d;border-radius:14px;
+  box-shadow:0 30px 60px -30px #000,0 0 0 1px #ffffff14;overflow:hidden;font-family:var(--body)}
+.bp::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 .35 0'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>")}
+.bp .lbl{font:600 .6rem var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#77715f;display:block}
+.bp .sm{font:500 .72rem var(--mono);color:#5d584a}
+.bp-main{padding:0 0 12px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.bp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#16181d;color:var(--sign);padding:7px 16px}
+.bp-air{display:inline-flex;align-items:center;gap:7px;font-family:var(--display);font-weight:700;letter-spacing:.16em;font-size:.9rem}
+.bp-air svg{width:18px;height:18px}
+.bp-kind{font:600 .62rem var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#cfc6a8}
+.bp-route{display:grid;grid-template-columns:auto minmax(50px,1fr) auto;align-items:end;gap:8px;padding-inline:16px}
+.bp-end b{font-family:var(--display);font-weight:700;font-size:clamp(1.8rem,5vw,2.3rem);line-height:.95;letter-spacing:.02em;display:block}
+.bp-end.r{text-align:right}
+.bp-arc svg{width:100%;height:auto;display:block;margin-bottom:8px}
+.bp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:7px 16px;border-block:1px dashed #16181d33}
+.bp-grid b{font-family:var(--display);font-weight:600;font-size:1rem}
+.bp-main>div:nth-last-child(2),.bp-foot{padding-inline:16px}
+.bp-names{font-family:var(--display);font-weight:600;font-size:.92rem;line-height:1.3}
+.bp-foot a{color:#16181d;font:600 .72rem var(--mono);word-break:break-all}
+.bp-stub{position:relative;background:#E2DCCB;border-left:2px dashed #16181d44;padding:12px 14px;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.bp-stub::before,.bp-stub::after{content:"";position:absolute;left:-12px;width:22px;height:22px;border-radius:50%;background:var(--night)}
+.bp-stub::before{top:-11px}.bp-stub::after{bottom:-11px}
+.bp-big{font-family:var(--display);font-weight:700;font-size:1.9rem;line-height:1}
+.bp-landed{font:700 .78rem var(--mono);letter-spacing:.14em;color:#1f7a45}
+.bp-bar{height:30px;margin-top:6px;background:repeating-linear-gradient(90deg,#16181d 0 2px,transparent 2px 4px,#16181d 4px 5px,transparent 5px 8px,#16181d 8px 11px,transparent 11px 12px,#16181d 12px 13px,transparent 13px 16px)}
+@media (max-width:640px){.bp{grid-template-columns:1fr}.bp-stub{border-left:0;border-top:2px dashed #16181d44}
+  .bp-stub::before,.bp-stub::after{top:-12px;left:auto}.bp-stub::before{left:-11px}.bp-stub::after{right:-11px;bottom:auto}
+  .bp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* v4 additions */
+h1{font-size:clamp(2.4rem,6.4vw,4.3rem)}
+.wrapcode{white-space:normal!important;overflow:visible!important;line-height:1.6}
+.def{background:var(--panel);border:1px solid var(--hair);border-left:4px solid var(--flap);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.def code{font-family:var(--mono);font-size:clamp(.82rem,2.2vw,.98rem);color:var(--chalk)}
+.def .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--flap);text-transform:uppercase}
+.def.quiet{border-left-color:var(--dim)} .def.quiet .lbl{color:var(--dim)}
+.slider{display:flex;flex-direction:column;gap:10px}
+.slider input[type=range]{width:100%;accent-color:var(--flap)}
+.slider .ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.7rem;color:var(--dim)}
+.big .flaps{font-size:clamp(1.6rem,5vw,2.4rem)} .big .flaps i{color:var(--lcc)}
+.verdict{display:flex;flex-direction:column;gap:10px;border:1px solid var(--ok);border-radius:10px;padding:18px 20px;background:#3ddc840c}
+.verdict .lbl{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;color:var(--ok);text-transform:uppercase}
+.verdict.no{border-color:var(--dim);background:#ffffff06} .verdict.no .lbl{color:var(--dim)}
+.verdict p{font-size:1.08rem}
+.cards{display:grid;gap:12px}
+.cards.c3{grid-template-columns:repeat(3,minmax(0,1fr))} .cards.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card b{font-family:var(--display);font-weight:600;font-size:1.3rem;line-height:1.15;color:var(--chalk)}
+.card b.num{font-family:var(--mono);font-weight:700;font-size:1.3rem;color:var(--flap)}
+.card span:not(.tag){font-size:.9rem;color:var(--dim);line-height:1.4}
+.card .read{color:#c9ccd3!important}
+.card.hot{border-color:var(--flap);background:#ffb81c0d}
+.stat small{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.takeaway{font-family:var(--display);font-weight:600;font-size:clamp(1.4rem,3.4vw,1.9rem);line-height:1.2;border-top:2px solid var(--flap);border-bottom:2px solid var(--flap);padding:16px 0;max-width:40ch}
+@media (max-width:760px){.cards.c4,.cards.c3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.cards.c3,.cards.c4{grid-template-columns:1fr}}
+
+/* v6: one alignment system. Every text block and box spans the same column, with one radius, one inner padding and one gap. */
+:root{--R:10px;--PAD:18px;--GAP:14px}
+.wrap{max-width:820px}
+section{gap:18px}
+section>p,.lede,.subq,.takeaway,.verdict p,.def p,.sub p,ul.lim,ol.steps{max-width:none}
+.takeaway{max-width:none}
+.def,.verdict,.eq,.panel,.pending,.chart,.tbl,.hist,details,.board{border-radius:var(--R)}
+.def,.verdict,.eq,.pending{padding:var(--PAD)}
+.def{border-left:1px solid var(--hair);box-shadow:inset 3px 0 0 var(--flap)}
+.def.quiet{box-shadow:inset 3px 0 0 var(--dim)}
+.verdict{border-width:1px}
+.panel{padding:var(--PAD);gap:var(--GAP)}
+.chart{padding:12px}
+.cards,.sub,.cellrow,.coef,.rules,.stats{gap:var(--GAP)}
+.card,.sub div,.cellrow div,.rules div{border-radius:var(--R);padding:var(--PAD)}
+.card{gap:6px;justify-content:flex-start}
+.sub div{gap:8px}
+.def p,.verdict p,.sub p,.card span,.coef span{font-size:1rem;line-height:1.55}
+.card span:not(.tag){font-size:.92rem}
+.verdict p{font-size:1.05rem}
+.eq{gap:var(--GAP)}
+.coef div{padding-top:10px}
+details .inner{padding:var(--PAD);gap:var(--GAP)}
+summary{padding:12px var(--PAD)}
+.hist .brow{padding:10px var(--PAD)}
+.key{gap:16px}
+.src{max-width:none}
+.card .tag{white-space:normal;overflow-wrap:anywhere;line-height:1.35;letter-spacing:.08em}
+.card b,.card span{overflow-wrap:anywhere;min-width:0}
+
+.arrive{display:flex;flex-direction:column;gap:22px}
+.arr-board{background:var(--panel);border:1px solid var(--hair);border-radius:var(--R);padding:16px 18px 14px;display:flex;flex-direction:column}
+.arr-thanks{padding-top:14px;font-family:var(--display);font-weight:600;font-size:1.15rem;line-height:1.3;color:#c9ccd3}
+
+.st.boarding{color:var(--flap)}
+.arr-board .brow{grid-template-columns:140px minmax(0,1fr) 130px;align-items:center}
+.arr-board .brow>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arr-board .brow .dest{text-transform:none;letter-spacing:.02em}
+.arr-board .brow .st{text-align:left}
+@media (max-width:600px){.arr-board .brow{grid-template-columns:96px minmax(0,1fr) 92px;font-size:.72rem}}
+/* ticket animation: plays once when the ticket scrolls into view; resting state is the final layout */
+.bp.in{animation:ticketIn .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ticketIn{0%{transform:translateY(28px) rotate(-2deg);opacity:.4}60%{transform:translateY(-4px) rotate(.4deg);opacity:1}100%{transform:none}}
+.bp-stub{transform-origin:left center}
+.bp.in .bp-stub{animation:tear 1.1s .7s ease-in-out both}
+@keyframes tear{0%,100%{transform:none}40%{transform:rotate(2.2deg) translateX(4px)}70%{transform:rotate(-.8deg)}}
+.bp-landed{display:inline-block;align-self:flex-start;border:2px solid #1f7a45;border-radius:4px;padding:2px 7px;transform:rotate(-5deg)}
+.bp.in .bp-landed{animation:stamp .5s 1.2s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes stamp{0%{transform:scale(2.2) rotate(-14deg);opacity:0}100%{transform:rotate(-5deg);opacity:1}}
+.bp-bar{position:relative;overflow:hidden}
+.bp.in .bp-bar::after{content:"";position:absolute;top:0;bottom:0;width:30%;left:-30%;background:linear-gradient(90deg,transparent,#ff3b3b66,transparent);animation:scan 2.6s 1.6s ease-in-out infinite}
+@keyframes scan{0%{left:-30%}60%,100%{left:100%}}
+@media (prefers-reduced-motion:reduce){.bp.in,.bp.in .bp-stub,.bp.in .bp-landed{animation:none}.bp.in .bp-bar::after{display:none}}
+
+.grow .barlayer .point path{transform-box:fill-box;transform-origin:50% 100%;animation:barUp .9s cubic-bezier(.2,.8,.2,1) both}
+.grow .barlayer .trace:nth-child(2) .point path{animation-delay:.12s}
+.grow .barlayer .point:nth-child(2) path{animation-delay:.05s}.grow .barlayer .point:nth-child(3) path{animation-delay:.1s}.grow .barlayer .point:nth-child(4) path{animation-delay:.15s}
+.grow .barlayer .point:nth-child(n+5) path{animation-delay:.2s}
+.grow .barlayer text{animation:barText .5s .7s both}
+@keyframes barUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes barText{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.grow .barlayer path,.grow .barlayer text{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="topbar" aria-hidden="true"><b id="topProg"></b></div>
+<nav class="rail" id="rail" aria-label="Flight progress">
+  <div class="track"></div>
+  <svg class="plane" id="plane" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.8 0 1.3.9 1.3 2v5.2l7.7 4.6v2l-7.7-2.4v4.4l2.2 1.7V21L12 20l-3.5 1v-1.5l2.2-1.7v-4.4L3 15.8v-2l7.7-4.6V4c0-1.1.5-2 1.3-2z" fill="#FFB81C" transform="rotate(180 12 12)"/></svg>
+</nav>
+<header class="hero">
+  <canvas id="runway" aria-hidden="true"></canvas>
+  <div class="flight-line"><i></i><span>Flight <b>G1</b> · ACDT · BTS 2024</span><span>5.16M flights</span><span>9 carriers</span></div>
+  <h1 class="giant" aria-label="Low-Cost vs Full-Service: Who Falls Behind in Peak Season?">
+    <span class="flaps l-lcc" data-giant="LOW-COST VS"></span>
+    <span class="flaps l-fsc" data-giant="FULL-SERVICE"></span>
+    <span class="flaps l-w" data-giant="WHO FALLS BEHIND"></span>
+    <span class="flaps l-q" data-giant="IN PEAK SEASON?"></span>
+  </h1>
+  <p class="subq">Not in <em>peak months</em>. Only on <em>busier-than-usual days</em> at the same airport do low-cost flights fall slightly further behind.</p>
+  <div class="board" role="navigation" aria-label="Sections">
+    <div class="board-top">
+      <div class="ttl">DEPARTURES<small>ACDT GROUP 1 · PROJECT 1</small></div>
+      <div id="clock" aria-hidden="true">--:--</div>
+    </div>
+    <div class="brow head"><span>Section</span><span>Destination</span><span class="gate">Gate</span><span>Status</span></div>
+    <a class="brow" href="#g1"><span class="wk">Question</span><span class="dest">LCC vs FSC in peak season</span><span class="gate">G1</span><span class="st done">Set</span></a>
+    <a class="brow" href="#g2"><span class="wk">Design</span><span class="dest">Same airport · day · hour</span><span class="gate">G2</span><span class="st done">Set</span></a>
+    <a class="brow" href="#g3"><span class="wk">Main</span><span class="dest">Peak months vs quiet months</span><span class="gate">G3</span><span class="st done">Landed</span></a>
+    <a class="brow" href="#g4"><span class="wk">Secondary</span><span class="dest">Busier-than-usual days</span><span class="gate">G4</span><span class="st done">Landed</span></a>
+    <a class="brow" href="#g5"><span class="wk">Explore</span><span class="dest">Move the crowding</span><span class="gate">G5</span><span class="st boarding">Boarding</span></a>
+    <a class="brow" href="#g6"><span class="wk">Checks</span><span class="dest">Robustness · DML · mechanism</span><span class="gate">G6</span><span class="st done">Landed</span></a>
+    <a class="brow" href="#g7"><span class="wk">Route</span><span class="dest">How we got here</span><span class="gate">G7</span><span class="st info">Arrived</span></a>
+    <div class="stats" aria-label="Main results">
+      <div class="stat"><span>Peak months · extra gap</span><span class="flaps" id="hM"></span><small id="hMs"></small></div>
+      <div class="stat pk"><span>Busy days · per +10%</span><span class="flaps" id="hD"></span><small id="hDs"></small></div>
+      <div class="stat"><span>Baseline gap · quiet months</span><span class="flaps" id="hB"></span><small id="hBs"></small></div>
+    </div>
+    <div class="prelim">BTS flight-level 2024 · 5.16M flights · 9 carriers · LCC − FSC share of arrivals ≥15 min late · same origin × date × hour</div>
+  </div>
+  <p class="lede" style="font-size:1.12rem;color:#c9ccd3">U.S. low-cost carriers (LCCs) arrive 15+ minutes late more often than full-service carriers (FSCs). We asked whether that gap widens in peak season, and moved from monthly totals to 5.16 million individual flights to compare like with like.</p>
+</header>
+
+<section id="g1">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G1</b><span>Research question</span></div>
+  <h2>Is the LCC–FSC delay gap larger in peak season?</h2>
+  <p>Comparing LCC and FSC flights that depart from the same airport, on the same day, in the same hour, is the gap in the probability of a 15+ minute arrival delay larger in peak season than in off-peak season?</p>
+  <div class="eq">
+    <code class="wrapcode">Delayed = <span class="b">β</span>·LCC + <span class="g">γ</span>·(LCC × Peak) + same-cell + controls</code>
+    <div class="coef">
+      <div><b>β</b><span>LCC − FSC gap off-peak</span></div>
+      <div><b>β + γ</b><span>LCC − FSC gap in peak</span></div>
+      <div class="key"><b>γ</b><span>How much more the gap grows in peak. This is the answer.</span></div>
+    </div>
+  </div>
+  <div class="sub">
+    <div><span class="lbl">Sub-question 1 · Mechanism</span><p>If the gap grows, does it move together with shorter scheduled ground time between an LCC aircraft's flights? <strong>Answer: no</strong> (G6).</p></div>
+    <div><span class="lbl">Sub-question 2 · Condition</span><p>Do we get the same answer if "peak" means a busy day, a crowded hour or severe weather? <strong>Answer: a small widening on busy days and crowded hours, none with severe weather</strong> (G4, G6).</p></div>
+  </div>
+</section>
+
+<section id="g2">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G2</b><span>Design</span></div>
+  <h2>Compare flights that share the same runway, sky and queue</h2>
+  <p>Each comparison happens inside one cell: one departure airport, one date, one departure hour. Flights in the same cell face the same weather and congestion at origin, so those conditions cancel out without being measured. Destination weather and congestion are added separately.</p>
+  <div class="cellrow" aria-label="Example cell">
+    <div><span>Origin</span><span class="flaps" data-flap="DEN"></span></div>
+    <div><span>Date</span><span class="flaps" data-flap="03JUL"></span></div>
+    <div><span>Hour</span><span class="flaps" data-flap="17:00"></span></div>
+    <div><span>Season</span><span class="flaps" data-flap="PEAK"></span></div>
+  </div>
+
+  <h3>How we defined peak season</h3>
+  <div class="def">
+    <span class="lbl">Main definition · months</span>
+    <p><strong>Peak</strong> = the three months of 2024 with the most scheduled flights per day, counted across all carriers reporting to BTS, including regional airlines: <strong>June, July, August</strong>. <strong>Off-peak</strong> = the three with the fewest: <strong>January, February, December</strong>. The six middle months are left out so the two groups are clearly different.</p>
+  </div>
+  <div class="chart"><div id="pMo" class="plot" style="height:270px"></div></div>
+  <p class="src">Scheduled flights per day, all carriers reporting to BTS (cancelled flights included). Daily averages are used because February has 29 days.</p>
+  <div class="def quiet">
+    <span class="lbl">How we got here</span>
+    <p>Our first definition used calendar months (Jul, Dec vs Jan, Apr) and showed no effect (γ = <span id="calG"></span>, p = <span id="calP"></span>). Traffic data showed December is among the quietest months, so we redefined peak season as the three months with the most scheduled flights. We also report a daily, airport-level Peak Index as a secondary analysis.</p>
+  </div>
+  <div class="def">
+    <span class="lbl">Secondary definition · busy days</span>
+    <code class="wrapcode">Peak Index = departures today ÷ that airport's usual same weekday − 1</code>
+    <p>+0.10 means the departure airport is 10% busier than its usual day of the same weekday. Counted across all carriers reporting to BTS and compared with the same weekday, so the weekly pattern is removed and the study carriers' own schedules carry less weight.</p>
+  </div>
+
+  <h3>Variables</h3>
+  <div class="cards c3">
+    <div class="card"><span class="tag g">Y · outcome</span><b>Late 15+ min</b><span>ArrDel15, 1 or 0 per flight</span></div>
+    <div class="card"><span class="tag g">D · compare</span><b>LCC vs FSC</b><span>WN B6 NK F9 G4 vs AA DL UA AS</span></div>
+    <div class="card"><span class="tag g">Moderator</span><b>Peak months · busy days</b><span>Enters as LCC × Peak</span></div>
+    <div class="card"><span class="tag ok">Controls</span><b>Same cell + destination</b><span>Distance, weather, congestion at arrival</span></div>
+    <div class="card"><span class="tag no">Mechanism</span><b>Ground time</b><span>Kept out of the main model</span></div>
+    <div class="card"><span class="tag ban">Excluded</span><b>Delay causes, carrier FE</b><span>They are delay itself, or equal LCC</span></div>
+  </div>
+  <p class="src">Data: BTS Reporting Carrier On-Time Performance, all of 2024, 5.16 million completed flights of nine carriers (Hawaiian and regional carriers excluded from the comparison), with hourly destination weather from Iowa Environmental Mesonet ASOS at 204 airports (96% of flights matched).</p>
+</section>
+
+<div class="lights" aria-hidden="true"></div>
+<section id="g3">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G3</b><span>Main result</span></div>
+  <h2>Peak months do not widen the gap</h2>
+  <div class="verdict no">
+    <span class="lbl">Main result · peak months vs off-peak months</span>
+    <p id="vMain"></p>
+  </div>
+  <div class="chart"><div id="pMain" class="plot" style="height:280px"></div></div>
+  <p class="src">Same-cell gap = LCC − FSC delay rate compared inside each origin × date × hour cell, averaged with flight weights. Raw gap = no matching.</p>
+  <div class="cards c4" id="cMain"></div>
+</section>
+
+<section id="g4">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G4</b><span>Secondary result</span></div>
+  <h2>Busier-than-usual days: a small widening</h2>
+  <div class="verdict">
+    <span class="lbl">Secondary result · daily Peak Index</span>
+    <p id="vSec"></p>
+  </div>
+  <div class="chart"><div id="pBins" class="plot" style="height:300px"></div></div>
+  <p class="src">Same-cell LCC − FSC gap by how busy the departure airport is compared with its usual same weekday.</p>
+  <div class="cards c4" id="cSec"></div>
+  <p class="takeaway">Peak months do not widen the gap. Busier-than-usual days at the same airport widen it a little in the same-cell comparison, but a DML check without that matching does not confirm it.</p>
+</section>
+
+<div class="lights" aria-hidden="true"></div>
+<section id="g5">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G5</b><span>Now boarding · Explore</span></div>
+  <h2>Move the crowding and watch the gap</h2>
+  <div class="panel">
+    <div class="panel-ctl">
+      <fieldset class="slider">
+        <legend>Airport busier than usual by</legend>
+        <input type="range" id="sPI" min="-20" max="25" step="1" value="0" aria-label="Peak Index in percent">
+        <div class="ticks"><span>−20%</span><span>0</span><span>+25%</span></div>
+      </fieldset>
+      <div class="big"><span class="flaps" id="sOut"></span></div>
+      <p class="src" id="sNote"></p>
+    </div>
+    <div class="panel-out">
+      <fieldset>
+        <legend>Carrier view</legend>
+        <div class="seg" role="group" aria-label="Carrier view"><button data-cv="0" aria-pressed="true">Usual day</button><button data-cv="1" aria-pressed="false">15% busier</button></div>
+      </fieldset>
+      <div class="chart"><div id="pCar" class="plot" style="height:320px"></div></div>
+      <p class="src">Adjusted delay rate of each carrier relative to the FSC average, within the same cells, with the same controls.</p>
+    </div>
+  </div>
+  <h3>Does one airline drive it? Remove one</h3>
+  <div id="drop" class="chips" role="group" aria-label="Remove one carrier"></div>
+  <div class="chart"><div id="pDrop" class="plot" style="height:280px"></div></div>
+  <p class="src" id="dropNote"></p>
+</section>
+
+<section id="g6">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G6</b><span>Checks</span></div>
+  <h2>How solid is it?</h2>
+  <h3>Peak months: every version shows no widening</h3>
+  <div class="cards c3" id="chkM"></div>
+  <h3>Busy days: every same-cell version shows widening</h3>
+  <div class="cards c4" id="chkD"></div>
+  <p class="src">γ for daily indices is shown per +10% busier. p values come from the permutation test over all 126 ways to label five of the nine carriers as LCC.</p>
+
+  <h3>DML check: machine-learning controls instead of same-cell matching</h3>
+  <div class="cards c3" id="chkDML"></div>
+  <p class="src" id="dmlNote"></p>
+
+  <h3>Other definitions of peak</h3>
+  <div class="cards c3" id="chkAlt"></div>
+
+  <h3>Why the gap? Scheduled ground time</h3>
+  <div class="cards c4" id="chkMech"></div>
+  <p id="mechNote"></p>
+</section>
+
+<div class="lights" aria-hidden="true"></div>
+<section id="g7">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h10M8 3l5 5-5 5" stroke="#111" stroke-width="2.2" fill="none"/></svg>G7</b><span>Route so far</span></div>
+  <h2>How we got here</h2>
+  <div class="hist">
+    <div class="brow head"><span>Week</span><span class="dest">Analysis</span><span>Result</span></div>
+    <div class="brow"><span class="wk">W3</span><span class="dest">LCC vs FSC mean and variance</span><span class="res">LCCs late 6.37 pp more often (p &lt; 0.001), higher in each of 2022, 2023 and 2024</span></div>
+    <div class="brow"><span class="wk">W4</span><span class="dest">36 monthly regressions</span><span class="res">Busier months did not widen the frequency gap (p = 0.476)</span></div>
+    <div class="brow"><span class="wk">W5</span><span class="dest">DML, season and weather</span><span class="res">Traffic effect disappeared; only a tiny NAS delay remained</span></div>
+    <div class="brow"><span class="wk">Final</span><span class="dest">Flight level, same cell</span><span class="res">Peak months: no widening. Busy days: the gap grows</span></div>
+  </div>
+  <p>Monthly totals mixed busy and quiet days and could not see which airport, hour or weather a flight met. Comparing individual flights in the same cell confirmed the monthly result and revealed a day-level effect it had hidden. This follows our professor's advice: one question, explanatory variables that are not themselves delay outcomes, and finer data.</p>
+  <details>
+    <summary>Week 4 chart · monthly peak index vs gap</summary>
+    <div class="inner">
+      <div class="controls"><div class="seg" role="group" aria-label="Outcome"><button id="oRate" aria-pressed="true">Delay rate gap</button><button id="oMin" aria-pressed="false">Delay length gap</button></div></div>
+      <div class="chart"><div id="pScatter" class="plot"></div></div>
+      <p id="fitText" class="src"></p>
+    </div>
+  </details>
+</section>
+
+<section id="info">
+  <div class="gate-sign"><b><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="#111" stroke-width="1.8" fill="none"/><path d="M8 7v4.5M8 4.6v.1" stroke="#111" stroke-width="2" stroke-linecap="round"/></svg>i</b><span>Information · Limits</span></div>
+  <h2>What we can and cannot claim</h2>
+  <ul class="lim">
+    <li>LCC status is a business model, not a switch. We report an adjusted gap, not the effect of "becoming" an LCC.</li>
+    <li>Only nine carriers, so ordinary standard errors overstate certainty. We rely on the permutation test over all 126 ways to label five of the nine carriers as LCC.</li>
+    <li>The baseline gap β is not clearly separable from carrier differences (permutation p ≈ 0.06–0.11): Delta and United are far better than American and Alaska, which look like LCCs.</li>
+    <li>The peak definition changed once (calendar months to traffic-ranked months); both versions show no widening.</li>
+    <li>The busy-day effect is small (about 0.8 pp on a day 15% busier than usual) and appears only when flights are compared within the same cell; DML without that matching does not confirm it.</li>
+    <li>Shorter ground time is real for LCCs but does not explain the gap; ground time is also a scheduling choice, so this is association, not proof.</li>
+    <li>Flight counts measure planned traffic, not passengers.</li>
+  </ul>
+</section>
+
+<section class="arrive" id="arrivals" aria-label="Arrivals: summary">
+  <div class="arr-board">
+    <div class="board-top"><div class="ttl">ARRIVALS<small>FINAL RESULTS</small></div></div>
+    <div class="brow head"><span>From</span><span>Finding</span><span>Status</span></div>
+    <div class="brow"><span class="wk">Peak months</span><span class="dest" id="arrM"></span><span class="st info">No widening</span></div>
+    <div class="brow"><span class="wk">Busy days</span><span class="dest" id="arrD"></span><span class="st done">Small widening</span></div>
+    <div class="brow"><span class="wk">Ground time</span><span class="dest" id="arrG"></span><span class="st info">Not the cause</span></div>
+    <div class="brow"><span class="wk">Baseline</span><span class="dest" id="arrB"></span><span class="st boarding">Not clear</span></div>
+    <p class="arr-thanks">Thank you for flying with Group 1. Peak season does not make low-cost carriers fall further behind.</p>
+  </div>
+<footer class="bp" aria-label="Boarding pass with team details">
+  <div class="bp-main">
+    <div class="bp-head">
+      <span class="bp-air"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="currentColor"/></svg>ACDT AIRWAYS</span>
+      <span class="bp-kind">Boarding pass</span>
+    </div>
+    <div class="bp-route">
+      <div class="bp-end"><span class="lbl">From</span><b>W03</b><span class="sm">Monthly averages</span></div>
+      <div class="bp-arc" aria-hidden="true"><svg viewBox="0 0 160 40"><path id="bpPath" d="M6 34 Q80 -8 154 34" fill="none" stroke="#16181d" stroke-width="1.6" stroke-dasharray="3 5"/><g id="bpPlane" transform="translate(80 13)"><path d="M-6 -3 L6 0 L-6 3 L-3.5 0 Z" fill="#16181d"/><animateMotion id="bpFly" begin="indefinite" dur="1.6s" fill="freeze" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".4 0 .2 1"><mpath href="#bpPath"/></animateMotion></g></svg></div>
+      <div class="bp-end r"><span class="lbl">To</span><b>FIN</b><span class="sm">Flight-level answer</span></div>
+    </div>
+    <div class="bp-grid">
+      <div><span class="lbl">Flight</span><b>G1</b></div>
+      <div><span class="lbl">Gate</span><b>G7</b></div>
+      <div><span class="lbl">Pitch</span><b>15 OCT</b></div>
+      <div><span class="lbl">Flights</span><b>5.16M</b></div>
+    </div>
+    <div><span class="lbl">Passengers</span><div class="bp-names">Kim Ihwan · Kim Hyein · Shin Minji · Jung Jiwon · Lee Sanggyeol · Chang Hyukjun</div></div>
+    <div class="bp-foot"><span class="lbl">Code</span><a href="https://github.com/jiwon75614-spec/late-by-label">github.com/jiwon75614-spec/late-by-label</a></div>
+  </div>
+  <div class="bp-stub">
+    <span class="lbl">Group</span><b class="bp-big">G1</b>
+    <span class="lbl">Status</span><b class="bp-landed">LANDED</b>
+    <div class="bp-bar" aria-hidden="true"></div>
+    <span class="sm">BTS · IEM ASOS · 2024</span>
+  </div>
+</footer>
+</section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script>
+const D = {"fig":{"n_flights":5164360,"raw":1.096641888653263,"cell":2.5601603932109946,"coverage":0.8316329612962691,"raw_peak":0.15711249388486692,"cell_peak":2.170352202973193,"raw_off":1.7479384628209509,"cell_off":2.982120724297502,"bins":{"<-10%":{"raw":0.15027054622834157,"cell":1.198083487937005,"share":0.12042053613613303},"-10\u20130%":{"raw":0.961297803034487,"cell":2.686911454419303,"share":0.2973685025830887},"0\u2013+10%":{"raw":0.9557095367394908,"cell":2.448749186973898,"share":0.4434917395379098},">+10%":{"raw":2.57398125757323,"cell":3.8222592342996027,"share":0.13871922174286844}},"bdrop":{"none":{"<-10%":1.198083487937005,"-10\u20130%":2.686911454419303,"0\u2013+10%":2.448749186973898,">+10%":3.8222592342996027},"AA":{"<-10%":3.29728082981919,"-10\u20130%":4.542594750927723,"0\u2013+10%":4.458781727014006,">+10%":6.031002842599246},"AS":{"<-10%":1.504824515716496,"-10\u20130%":2.9200828875928013,"0\u2013+10%":2.5620734961376637,">+10%":3.9958270789956343},"B6":{"<-10%":0.6194276846942022,"-10\u20130%":2.331710442261162,"0\u2013+10%":2.3747252963644017,">+10%":3.5531563835232975},"DL":{"<-10%":-0.8022475760947365,"-10\u20130%":1.182617818591815,"0\u2013+10%":0.6697870053001375,">+10%":2.742657158539024},"F9":{"<-10%":0.7110297854004749,"-10\u20130%":1.9569339182761194,"0\u2013+10%":1.356447694213087,">+10%":2.667893982781546},"G4":{"<-10%":1.2026028995548095,"-10\u20130%":2.730012162854236,"0\u2013+10%":2.516308196397206,">+10%":3.897778831781991},"NK":{"<-10%":1.0947768415362091,"-10\u20130%":2.830986308936229,"0\u2013+10%":2.5421302399124657,">+10%":3.8710641930763},"UA":{"<-10%":0.7966891111840907,"-10\u20130%":2.072561167112637,"0\u2013+10%":1.9074886893516756,">+10%":2.9868572490483687},"WN":{"<-10%":3.834884608290668,"-10\u20130%":4.868856736065799,"0\u2013+10%":4.909201058248986,">+10%":6.082266809740666}},"pi_pct":[-0.106,-0.041,0.017,0.065,0.112],"carrier":{"pi0":{"AA":3.257,"AS":2.491,"B6":3.578,"DL":-2.512,"F9":7.688,"G4":0.784,"NK":1.888,"UA":-3.236,"WN":1.966},"pi15":{"AA":3.332,"AS":2.493,"B6":4.032,"DL":-2.319,"F9":9.119,"G4":1.547,"NK":3.048,"UA":-3.506,"WN":2.616}},"mo_perday":[17654.0,17904.0,19089.0,19407.0,19669.0,20371.0,20471.0,19969.0,19421.0,19855.0,19180.0,19051.0]},"A1":{"name":"A1_months_perday","n":2037682,"beta":4.643050471436295,"gamma":-1.3324853689731588,"p_beta_one":0.05555555555555555,"p_gamma_one":0.7857142857142857,"p_gamma_two":0.4444444444444444,"rank_gamma":99,"M_sd":0.49887524653879106,"loo":{"AA":{"beta":6.224,"gamma":-0.289},"AS":{"beta":4.916,"gamma":-1.527},"B6":{"beta":4.126,"gamma":-1.022},"DL":{"beta":3.695,"gamma":-1.658},"F9":{"beta":4.387,"gamma":-2.026},"G4":{"beta":4.622,"gamma":-1.287},"NK":{"beta":4.978,"gamma":-1.533},"UA":{"beta":3.569,"gamma":-1.495},"WN":{"beta":5.243,"gamma":-0.168}}},"A1t":{"name":"A1_months_total","n":2033691,"beta":3.852137577718125,"gamma":-0.8742951661648052,"p_beta_one":0.09523809523809523,"p_gamma_one":0.7063492063492064,"p_gamma_two":0.5714285714285714,"rank_gamma":89,"M_sd":0.49887034264055674,"loo":{"AA":{"beta":5.369,"gamma":-0.409},"AS":{"beta":4.137,"gamma":-1.086},"B6":{"beta":3.575,"gamma":-0.726},"DL":{"beta":2.58,"gamma":-0.218},"F9":{"beta":3.279,"gamma":-1.426},"G4":{"beta":3.856,"gamma":-0.858},"NK":{"beta":4.056,"gamma":-1.098},"UA":{"beta":3.157,"gamma":-1.34},"WN":{"beta":4.776,"gamma":0.344}}},"A2":{"name":"A2_PI_dow","n":4141960,"beta":3.8163143443001384,"gamma":5.071278363228197,"p_beta_one":0.1111111111111111,"p_gamma_one":0.007936507936507936,"p_gamma_two":0.015873015873015872,"rank_gamma":1,"M_sd":0.09646428422752873,"loo":{"AA":{"beta":5.652,"gamma":5.7},"AS":{"beta":4.017,"gamma":5.091},"B6":{"beta":3.706,"gamma":5.838},"DL":{"beta":2.85,"gamma":6.323},"F9":{"beta":2.859,"gamma":4.265},"G4":{"beta":3.841,"gamma":5.249},"NK":{"beta":4.216,"gamma":5.164},"UA":{"beta":2.726,"gamma":4.155},"WN":{"beta":4.924,"gamma":6.089}}},"A3":{"name":"A3_PI_all","n":4141960,"beta":3.779588128720731,"gamma":5.8289229823528705,"p_beta_one":0.1111111111111111,"p_gamma_one":0.023809523809523808,"p_gamma_two":0.047619047619047616,"rank_gamma":3,"M_sd":0.11480204232356199,"loo":{"AA":{"beta":5.613,"gamma":6.583},"AS":{"beta":3.98,"gamma":5.934},"B6":{"beta":3.662,"gamma":6.643},"DL":{"beta":2.818,"gamma":6.491},"F9":{"beta":2.827,"gamma":5.015},"G4":{"beta":3.804,"gamma":6.149},"NK":{"beta":4.179,"gamma":5.778},"UA":{"beta":2.69,"gamma":5.049},"WN":{"beta":4.876,"gamma":6.664}}},"Aw":{"beta":4.349281844929112,"gamma":4.615588489009149,"p_gamma_one":0.023809523809523808},"P9":{"beta":3.7716609565328287,"gamma":5.714018986356381,"p_gamma_one":0.007936507936507936},"cal":{"beta":4.299513170615169,"gamma":-1.4705576080594898,"p_gamma_two":0.5317460317460317},"w4":{"points":[{"ym":"2022-01","pi":-8.8,"gr":4.65,"gm":-4.52,"peak":false},{"ym":"2022-02","pi":-14.43,"gr":4.98,"gm":-6.6,"peak":false},{"ym":"2022-03","pi":-1.41,"gr":10.62,"gm":-5.64,"peak":false},{"ym":"2022-04","pi":-3.81,"gr":11.75,"gm":-6.97,"peak":false},{"ym":"2022-05","pi":0.55,"gr":5.66,"gm":-14.56,"peak":false},{"ym":"2022-06","pi":1.64,"gr":5.59,"gm":-15.34,"peak":false},{"ym":"2022-07","pi":6.3,"gr":5.96,"gm":-10.46,"peak":true},{"ym":"2022-08","pi":6.21,"gr":8.48,"gm":-11.25,"peak":true},{"ym":"2022-09","pi":0.23,"gr":7.87,"gm":-11.28,"peak":false},{"ym":"2022-10","pi":5.53,"gr":6.21,"gm":-15.79,"peak":false},{"ym":"2022-11","pi":1.9,"gr":4.88,"gm":-13.53,"peak":false},{"ym":"2022-12","pi":6.07,"gr":3.77,"gm":-6.67,"peak":true},{"ym":"2023-01","pi":-5.8,"gr":1.24,"gm":-6.09,"peak":false},{"ym":"2023-02","pi":-12.64,"gr":0.12,"gm":-11.14,"peak":false},{"ym":"2023-03","pi":0.9,"gr":4.48,"gm":-8.2,"peak":false},{"ym":"2023-04","pi":-2.14,"gr":6.21,"gm":-11.76,"peak":false},{"ym":"2023-05","pi":2.16,"gr":4.69,"gm":-15.05,"peak":false},{"ym":"2023-06","pi":1.76,"gr":5.12,"gm":-15.81,"peak":false},{"ym":"2023-07","pi":6.24,"gr":6.26,"gm":-13.0,"peak":true},{"ym":"2023-08","pi":6.3,"gr":5.2,"gm":-20.43,"peak":true},{"ym":"2023-09","pi":-1.13,"gr":5.66,"gm":-11.26,"peak":false},{"ym":"2023-10","pi":5.26,"gr":7.78,"gm":-11.01,"peak":true},{"ym":"2023-11","pi":-1.25,"gr":4.86,"gm":-7.95,"peak":false},{"ym":"2023-12","pi":0.35,"gr":5.71,"gm":-7.26,"peak":false},{"ym":"2024-01","pi":-6.97,"gr":1.3,"gm":-19.55,"peak":false},{"ym":"2024-02","pi":-11.53,"gr":2.8,"gm":-8.3,"peak":false},{"ym":"2024-03","pi":2.37,"gr":3.88,"gm":-6.73,"peak":false},{"ym":"2024-04","pi":-0.83,"gr":0.58,"gm":-7.99,"peak":false},{"ym":"2024-05","pi":4.26,"gr":0.09,"gm":-13.83,"peak":false},{"ym":"2024-06","pi":4.72,"gr":1.73,"gm":-13.22,"peak":true},{"ym":"2024-07","pi":8.61,"gr":-0.79,"gm":-24.27,"peak":true},{"ym":"2024-08","pi":4.56,"gr":0.08,"gm":-10.49,"peak":true},{"ym":"2024-09","pi":-2.4,"gr":0.5,"gm":-7.81,"peak":false},{"ym":"2024-10","pi":3.19,"gr":1.77,"gm":-7.0,"peak":false},{"ym":"2024-11","pi":-4.13,"gr":-0.6,"gm":-8.11,"peak":false},{"ym":"2024-12","pi":-1.84,"gr":1.33,"gm":-4.52,"peak":false}],"fits":{"gr":{"b0":4.178,"b1":0.067,"p":0.474,"r2":0.015},"gm":{"b0":-10.928,"b1":-0.342,"p":0.011,"r2":0.177}}},"dml":{"pi_dow_terciles":[-0.018822770565748215,0.04777594655752182],"off_months":{"theta":5.061994266058746,"se":0.4587893053367049,"n":300000,"r2_g":0.09289838648579796,"r2_m":0.6965952446448558},"peak_months":{"theta":4.054771237599853,"se":0.639624386925309,"n":300000,"r2_g":0.14030781090524125,"r2_m":0.7182451655743438},"quiet_days":{"theta":5.090566784112971,"se":0.3735158635705082,"n":300000,"r2_g":0.10004149739856472,"r2_m":0.6951612792247663},"busy_days":{"theta":4.906494861810561,"se":0.3854351699379708,"n":300000,"r2_g":0.11486890363445212,"r2_m":0.7048918541324163},"diff_months":{"diff":-1.0072230284588928,"se":0.7871511818201848,"z":-1.2795801514644498},"diff_days":{"diff":-0.18407192230240987,"se":0.5367256008091424,"z":-0.342953498072221}},"mechDesc":{"tercile_mean_PI":{"quiet":-0.09405671060085297,"busy":0.11741954833269119},"ground":{"all":{"LCC":{"median":50.0,"tight45":0.24357719569735503},"FSC":{"median":66.0,"tight45":0.04290167205806076}},"off_months":{"LCC":{"median":50.0,"tight45":0.2311678456657143},"FSC":{"median":67.0,"tight45":0.039950002192886275}},"peak_months":{"LCC":{"median":50.0,"tight45":0.2600404125484995},"FSC":{"median":65.0,"tight45":0.049601705817977015}},"quiet_days":{"LCC":{"median":50.0,"tight45":0.23639493933143294},"FSC":{"median":67.0,"tight45":0.039368277187097046}},"busy_days":{"LCC":{"median":50.0,"tight45":0.24598573546968702},"FSC":{"median":65.0,"tight45":0.05307065992018244}}},"legs":{"LCC":5.120441436767578,"FSC":4.088822364807129}},"terc":{"quiet":-0.09405671060085297,"busy":0.11741954833269119},"B6m":{"name":"B6_mech","n":4141960,"beta":4.338095277051845,"gamma":5.4479669649685185,"p_beta_one":0.0873015873015873,"p_gamma_one":0.007936507936507936,"p_gamma_two":0.015873015873015872,"rank_gamma":1,"M_sd":0.09646428422752873},"C7h":{"name":"C7_hour","n":4141960,"beta":3.855999386169074,"gamma":2.219064244001922,"p_beta_one":0.1111111111111111,"p_gamma_one":0.023809523809523808,"p_gamma_two":0.05555555555555555,"rank_gamma":3,"M_sd":0.16452649145325446},"C7w":{"name":"C7_wx","n":4070652,"beta":3.8635757907417925,"gamma":0.2960828735382742,"p_beta_one":0.1111111111111111,"p_gamma_one":0.3412698412698413,"p_gamma_two":0.6746031746031746,"rank_gamma":43,"M_sd":0.24182254117857002}};
+const F=D.fig, A1=D.A1, A1T=D.A1t, A2=D.A2, A3=D.A3, AW=D.Aw, P9=D.P9, CAL=D.cal;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sg=(x,d=2)=>(x>=0?'+':'−')+Math.abs(x).toFixed(d);
+const sgF=(x,d=2)=>(x>=0?'+':'-')+Math.abs(x).toFixed(d);
+const p3=x=>x<0.001?'<0.001':x.toFixed(3), p2=x=>x.toFixed(2);
+const NAMES={AA:'American',AS:'Alaska',DL:'Delta',UA:'United',B6:'JetBlue',F9:'Frontier',G4:'Allegiant',NK:'Spirit',WN:'Southwest'};
+const LCC=new Set(['WN','B6','NK','F9','G4']);
+const looRange=(o,k,s=1)=>{const v=Object.values(o.loo).map(x=>x[k]*s);return[Math.min(...v),Math.max(...v)]};
+
+/* split-flap */
+const CHARS=' 0123456789.+-%:PABCDEFGHIJKLMNOQRSTUVWXYZ';
+function flapTo(el,text,instant){text=String(text).toUpperCase();if(el.dataset.cur===text)return;el.dataset.cur=text;
+  const tiles=[...text].map(()=>document.createElement('i'));el.replaceChildren(...tiles);el.setAttribute('aria-label',text);
+  [...text].forEach((ch,k)=>{const t=tiles[k],fin=ch===' '?' ':ch;if(reduce||instant){t.textContent=fin;return}
+    let n=4+k+Math.floor(Math.random()*3);const tick=()=>{if(n--<=0){t.textContent=fin;return}t.textContent=CHARS[Math.floor(Math.random()*CHARS.length)];setTimeout(tick,38)};t.textContent=fin;tick()})}
+function clock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+clock();setInterval(clock,20000);
+document.querySelectorAll('[data-flap]').forEach(e=>flapTo(e,e.dataset.flap));
+/* giant title: final text is set at once, then each line flips in, staggered */
+document.querySelectorAll('[data-giant]').forEach((e,k)=>{const txt=e.dataset.giant;flapTo(e,txt,true);
+  if(!reduce)setTimeout(()=>{e.dataset.cur='';flapTo(e,txt)},200+k*190)});
+
+
+/* approach-light dividers: sequenced flashers running toward the threshold */
+document.querySelectorAll('.lights').forEach(el=>{const N=Math.max(10,Math.min(22,Math.floor((el.clientWidth||600)/28)));el.style.setProperty('--dur',(N*0.08).toFixed(2)+'s');let h='';for(let k=0;k<N;k++)h+=`<i style="--k:${k}"></i>`;
+  h+='<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="#FFB81C" transform="rotate(90 12 12)"/></svg>';el.innerHTML=h});
+/* runway lights (static frame when reduced motion) */
+(function runway(){const cv=document.getElementById('runway'),ctx=cv.getContext('2d');let W,H,t=0,dpr=Math.min(2,window.devicePixelRatio||1);
+  function size(){W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  function frame(){ctx.clearRect(0,0,W,H);const hz=H*.12,cx=W/2,bot=H*1.02,halfB=Math.min(W*.6,680),halfT=10;
+    const g=ctx.createLinearGradient(0,hz,0,H);g.addColorStop(0,'rgba(255,184,28,0.06)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,hz,W,H-hz);
+    const N=34;for(let k=0;k<N;k++){let z=((k/N)+t)%1;const p=z*z;const y=hz+(bot-hz)*p,half=halfT+(halfB-halfT)*p,r=0.6+3.2*p,a=0.15+0.75*p;
+      ctx.fillStyle=`rgba(255,214,120,${a})`;ctx.beginPath();ctx.arc(cx-half,y,r,0,7);ctx.arc(cx+half,y,r,0,7);ctx.fill();
+      if(k%2===0){ctx.fillStyle=`rgba(236,237,232,${a*.55})`;ctx.fillRect(cx-r*.6,y,r*1.2,r*5)}}
+    for(let k=0;k<5;k++){const p=(k+1)/6;ctx.fillStyle=`rgba(61,220,132,${.25+.5*p})`;const y=hz-4,half=halfT+6+k*9;ctx.beginPath();ctx.arc(cx-half,y,1.6,0,7);ctx.arc(cx+half,y,1.6,0,7);ctx.fill()}}
+  size();frame();addEventListener('resize',()=>{size();frame()});
+  if(!reduce){let vis=true;new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(cv);
+    (function loop(){if(vis&&!document.hidden){t=(t+0.0016)%1;frame()}requestAnimationFrame(loop)})()}})();
+
+/* flight progress rail + top bar */
+(function progress(){const ids=['g1','g2','g3','g4','g5','g6','g7'],labs=['QUESTION','DESIGN','MAIN','SECONDARY','EXPLORE','CHECKS','ROUTE'];
+  const rail=document.getElementById('rail'),plane=document.getElementById('plane'),bar=document.getElementById('topProg');
+  const dots=ids.map((id,i)=>{const a=document.createElement('a');a.href='#'+id;a.style.top=(i/(ids.length-1)*100)+'%';a.innerHTML='<span>'+labs[i]+'</span>';a.setAttribute('aria-label',labs[i]);rail.appendChild(a);return a});
+  function upd(){const secs=ids.map(id=>document.getElementById(id));const y=scrollY+innerHeight*.4;
+    let k=0;secs.forEach((s,i)=>{if(s.offsetTop<=y)k=i});const s0=secs[k],s1=secs[Math.min(k+1,ids.length-1)];
+    const frac=k===ids.length-1?0:Math.max(0,Math.min(1,(y-s0.offsetTop)/Math.max(1,s1.offsetTop-s0.offsetTop)));
+    const pos=(k+frac)/(ids.length-1);plane.style.top=(pos*100)+'%';dots.forEach((d,i)=>d.classList.toggle('on',i<=k));
+    const doc=document.documentElement;bar.style.width=(100*scrollY/Math.max(1,doc.scrollHeight-innerHeight))+'%'}
+  addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);upd()})();
+
+/* scroll story: numbers re-flip and charts grow the first time a section comes into view */
+function scramble(el){if(reduce||el.dataset.done)return;el.dataset.done=1;const fin=el.textContent;let n=10;
+  const tick=()=>{if(n--<=0){el.textContent=fin;return}el.textContent=fin.replace(/[0-9]/g,()=>Math.floor(Math.random()*10));setTimeout(tick,40)};tick()}
+const GROW={g2:['pMo'],g3:['pMain'],g4:['pBins']};
+function grow(id){if(reduce)return;const gd=document.getElementById(id);if(!gd||gd.dataset.grown)return;gd.dataset.grown=1;
+  gd.classList.add('grow');setTimeout(()=>gd.classList.remove('grow'),1400)}   // bars rise via CSS on the drawn SVG; data never changes
+const chartIO=new IntersectionObserver(ents=>ents.forEach(e=>{if(e.isIntersecting&&e.intersectionRatio>=.55){grow(e.target.id);chartIO.unobserve(e.target)}}),{threshold:[.55]});
+setTimeout(()=>['pMo','pMain','pBins'].forEach(id=>{const el=document.getElementById(id);if(el)chartIO.observe(el)}),400);
+const io=new IntersectionObserver((ents)=>ents.forEach(e=>{if(!e.isIntersecting)return;const s=e.target;s.classList.add('seen');
+  s.querySelectorAll('.card b.num').forEach(scramble);io.unobserve(s)}),{threshold:.15});
+setTimeout(()=>document.querySelectorAll('section[id^="g"]').forEach(s=>io.observe(s)),400);
+
+/* board */
+flapTo(document.getElementById('hM'),sgF(A1.gamma)+'PP'); document.getElementById('hMs').textContent=`not significant · p ${p2(A1.p_gamma_two)}`;
+flapTo(document.getElementById('hD'),sgF(A2.gamma*0.1)+'PP'); document.getElementById('hDs').textContent=`significant · p ${p3(A2.p_gamma_one)}`;
+flapTo(document.getElementById('hB'),sgF(A1.beta)+'PP'); document.getElementById('hBs').textContent=`not significant across carriers · p ${p2(A1.p_beta_one)}`;
+document.getElementById('arrM').textContent=`γ ${sg(A1.gamma)} pp · p ${p2(A1.p_gamma_two)}`;
+document.getElementById('arrD').textContent=`${sg(A2.gamma*0.1)} pp per +10% · p ${p3(A2.p_gamma_one)}`;
+document.getElementById('arrB').textContent=`${sg(A1.beta)} pp · p ${p2(A1.p_beta_one)}`;
+
+/* steps 5-7 */
+const DM=D.dml, MD=D.mechDesc, BM=D.B6m, CH=D.C7h, CW=D.C7w;
+const dmlC=[['Off-peak months',DM.off_months.theta,'θ · Jan Feb Dec'],['Peak months',DM.peak_months.theta,'θ · Jun Jul Aug'],['Difference',DM.diff_months.diff,`z = ${DM.diff_months.z.toFixed(2)} · no widening`]];
+const dmlD=[['Quiet days',DM.quiet_days.theta,'θ · bottom third'],['Busy days',DM.busy_days.theta,'θ · top third'],['Difference',DM.diff_days.diff,`z = ${DM.diff_days.z.toFixed(2)} · not confirmed`]];
+document.getElementById('chkDML').innerHTML=[['Months',DM.diff_months,DM.off_months,DM.peak_months,'Peak − off-peak'],['Days',DM.diff_days,DM.quiet_days,DM.busy_days,'Busy − quiet third']].map(([k,df,a,b,lab])=>
+  `<div class="card"><span class="tag no">${k}</span><b class="num">${sg(df.diff)} pp</b><span>${lab}: ${sg(a.theta)} → ${sg(b.theta)} pp</span><span class="read">z = ${df.z.toFixed(2)} · ${Math.abs(df.z)<1.96?'not significant':'significant'}</span></div>`).join('')+
+  `<div class="card"><span class="tag no">Overlap</span><b class="num">R² ${DM.off_months.r2_m.toFixed(2)}</b><span>How well airports, hour and date predict LCC status</span><span class="read">High: LCC and FSC flights differ in where and when they fly</span></div>`;
+document.getElementById('dmlNote').textContent=`Partially linear DML, D = LCC, gradient-boosting nuisance models, 5-fold cross-fitting grouped by date, 300,000 flights per group, standard errors clustered by date. Carrier fixed effects excluded because they would equal LCC status. If the same-cell regression held exactly, the busy − quiet difference would be about ${sg(A2.gamma*(D.terc.busy-D.terc.quiet))} pp.`;
+document.getElementById('chkAlt').innerHTML=[['Crowded hour','Origin hour busier than usual for that hour, all carriers',sg(CH.gamma*0.1)+' pp / +10%',`p = ${p3(CH.p_gamma_one)} one-sided, ${p3(CH.p_gamma_two)} two-sided`,'ok'],
+ ['Severe weather','Thunderstorm, snow, fog, visibility < 3 mi or gusts ≥ 30 kt at origin',sg(CW.gamma)+' pp',`p = ${p2(CW.p_gamma_two)} two-sided · no effect`,'no'],
+ ['Busy day (main)','Departures vs usual same weekday',sg(A2.gamma*0.1)+' pp / +10%',`p = ${p3(A2.p_gamma_one)} one-sided`,'ok']].map(c=>
+  `<div class="card"><span class="tag ${c[4]}">${c[0]}</span><b class="num">${c[2]}</b><span>${c[1]}</span><span class="read">${c[3]}</span></div>`).join('');
+const gL=MD.ground.all.LCC, gF=MD.ground.all.FSC;
+document.getElementById('chkMech').innerHTML=[['Median ground time',`${gL.median.toFixed(0)} vs ${gF.median.toFixed(0)} min`,'LCC vs FSC, between two flights of one aircraft'],
+ ['Tight turns < 45 min',`${(gL.tight45*100).toFixed(0)}% vs ${(gF.tight45*100).toFixed(0)}%`,'Share of connections'],
+ ['Flights per aircraft-day',`${MD.legs.LCC.toFixed(1)} vs ${MD.legs.FSC.toFixed(1)}`,'Utilisation'],
+ ['With ground time controlled',`β ${sg(BM.beta)} · γ ${sg(BM.gamma*0.1)}`,`Before: β ${sg(A2.beta)} · γ ${sg(A2.gamma*0.1)} per +10%`]].map((c,i)=>
+  `<div class="card${i===3?' hot':''}"><span class="tag ${i===3?'g':'no'}">${c[0]}</span><b class="num">${c[1]}</b><span>${c[2]}</span></div>`).join('');
+document.getElementById('mechNote').textContent=`LCC aircraft turn faster and fly more legs a day. But adding scheduled ground time, first-flight-of-day and flights per aircraft-day to the model does not shrink the gap or its growth on busy days, so ground time does not explain the LCC disadvantage in our data. On busy days the share of tight turns rises slightly for both types (LCC ${(MD.ground.quiet_days.LCC.tight45*100).toFixed(0)}% → ${(MD.ground.busy_days.LCC.tight45*100).toFixed(0)}%, FSC ${(MD.ground.quiet_days.FSC.tight45*100).toFixed(0)}% → ${(MD.ground.busy_days.FSC.tight45*100).toFixed(0)}%).`;
+document.getElementById('arrG').textContent=`${gL.median.toFixed(0)} vs ${gF.median.toFixed(0)} min · β unchanged`;
+document.getElementById('calG').textContent=sg(CAL.gamma); document.getElementById('calP').textContent=p2(CAL.p_gamma_two);
+
+/* main result text + cards */
+const [lm0,lm1]=looRange(A1,'gamma');
+document.getElementById('vMain').innerHTML=`In the three busiest months, the LCC − FSC gap is not larger than in the three quietest months. The estimate even points the other way (γ = ${sg(A1.gamma)} pp), and it is not statistically different from zero (permutation p = ${p2(A1.p_gamma_two)}). Peak season does not make low-cost carriers fall further behind.`;
+const cm=[['β · off-peak gap',sg(A1.beta)+' pp','Quiet months, same cell, all controls',`p = ${p2(A1.p_beta_one)} · not significant across carriers`,'no'],
+ ['γ · extra in peak',sg(A1.gamma)+' pp','Busiest vs quietest months',`p = ${p2(A1.p_gamma_two)} two-sided`,'g'],
+ ['Peak-month gap',sg(A1.beta+A1.gamma)+' pp','β + γ',`Not different from off-peak (p = ${p2(A1.p_gamma_two)})`,'no'],
+ ['Drop one carrier',`${sg(lm0)} to ${sg(lm1)}`,'γ in 9 runs','Negative every time','no']];
+document.getElementById('cMain').innerHTML=cm.map((c,i)=>`<div class="card${i===1?' hot':''}"><span class="tag ${c[4]}">${c[0]}</span><b class="num">${c[1]}</b><span>${c[2]}</span><span class="read">${c[3]}</span></div>`).join('');
+
+/* secondary result text + cards */
+const g10=A2.gamma*0.1, g15=A2.gamma*0.15, [ld0,ld1]=looRange(A2,'gamma',0.1);
+document.getElementById('vSec').innerHTML=`When the departure airport is busier than its usual same weekday, the gap grows: <strong>${sg(g10)} pp for every 10% busier</strong> (permutation p = ${p3(A2.p_gamma_one)} one-sided, ${p3(A2.p_gamma_two)} two-sided; the real LCC labelling ranks first of 126). On a day 15% busier than usual, the gap grows by about ${g15.toFixed(2)} pp: clear statistically, but small next to the ${A2.beta.toFixed(2)} pp baseline. A DML check without same-cell matching does not confirm it (G6).`;
+const cs=[['β · usual day',sg(A2.beta)+' pp','Peak Index = 0',`p = ${p2(A2.p_beta_one)} · not significant across carriers`,'no'],
+ ['γ · per +10%',sg(g10)+' pp','Weekday-adjusted, all carriers',`p = ${p3(A2.p_gamma_one)} · rank ${A2.rank_gamma}/126`,'g'],
+ ['15% busier day',sg(A2.beta+g15)+' pp','β + 0.15 γ',`+${g15.toFixed(2)} pp on the baseline`,'no'],
+ ['Drop one carrier',`${sg(ld0)} to ${sg(ld1)}`,'γ per +10% in 9 runs','Positive every time','ok']];
+document.getElementById('cSec').innerHTML=cs.map((c,i)=>`<div class="card${i===1?' hot':''}"><span class="tag ${c[4]}">${c[0]}</span><b class="num">${c[1]}</b><span>${c[2]}</span><span class="read">${c[3]}</span></div>`).join('');
+
+/* checks */
+const chkM=[['Main','Top vs bottom 3 months by flights per day',A1.gamma,A1.p_gamma_two],
+ ['Total flights','Top vs bottom 3 by monthly total (Jul Aug Oct vs Jan Feb Nov)',A1T.gamma,A1T.p_gamma_two],
+ ['First definition','Jul, Dec vs Jan, Apr',CAL.gamma,CAL.p_gamma_two]];
+document.getElementById('chkM').innerHTML=chkM.map(c=>`<div class="card"><span class="tag no">${c[0]}</span><b class="num">${sg(c[2])} pp</b><span>${c[1]}</span><span class="read">p = ${p2(c[3])} two-sided</span></div>`).join('');
+const chkD=[['Main','Weekday-adjusted, all carriers',A2.gamma,A2.p_gamma_one],
+ ['No weekday adjustment','All carriers',A3.gamma,A3.p_gamma_one],
+ ['+ LCC × weekday','Unadjusted index, weekday interactions added',AW.gamma,AW.p_gamma_one],
+ ['Nine carriers only','First version of the index',P9.gamma,P9.p_gamma_one]];
+document.getElementById('chkD').innerHTML=chkD.map(c=>`<div class="card"><span class="tag ok">${c[0]}</span><b class="num">${sg(c[2]*0.1)} pp</b><span>${c[1]}</span><span class="read">p = ${p3(c[3])} one-sided</span></div>`).join('');
+
+/* plots */
+const cfg={displayModeBar:false,responsive:true};
+function base(extra){const ink=css('--chalk'),muted=css('--dim'),line=css('--hair');
+  return Object.assign({paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'Barlow, system-ui, sans-serif',color:ink,size:13},margin:{l:56,r:16,t:16,b:46},
+    xaxis:{gridcolor:line,linecolor:line,zeroline:false,tickfont:{color:muted,family:'JetBrains Mono, monospace',size:11}},
+    yaxis:{gridcolor:line,linecolor:line,zeroline:false,tickfont:{color:muted,family:'JetBrains Mono, monospace',size:11}},
+    legend:{orientation:'h',y:-0.22,font:{color:muted}},hoverlabel:{bgcolor:css('--tile'),bordercolor:css('--flap'),font:{family:'JetBrains Mono, monospace',color:ink}}},extra)}
+const axTitle=t=>({text:t,font:{color:css('--dim'),size:12}});
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'], TOP=[6,7,8], BOT=[1,2,12];
+function drawMo(){const v=F.mo_perday,col=v.map((_,i)=>TOP.includes(i+1)?css('--peak'):BOT.includes(i+1)?css('--off'):css('--tile'));
+  Plotly.react('pMo',[{type:'bar',x:MON,y:v,marker:{color:col,line:{color:v.map((_,i)=>TOP.includes(i+1)||BOT.includes(i+1)?'rgba(0,0,0,0)':css('--hair')),width:1}},
+    text:v.map((x,i)=>TOP.includes(i+1)?'PEAK':BOT.includes(i+1)?'OFF':''),textposition:'outside',cliponaxis:false,textfont:{family:'JetBrains Mono, monospace',size:10,color:css('--chalk')},
+    hovertemplate:'%{x}: %{y:,.0f} flights per day<extra></extra>'}],
+    base({showlegend:false,bargap:.3,yaxis:{...base().yaxis,title:axTitle('Flights per day'),range:[16500,21200]}}),cfg)}
+function drawMain(){const X=['OFF-PEAK · JAN FEB DEC','PEAK · JUN JUL AUG'];
+  Plotly.react('pMain',[{type:'bar',name:'Raw gap',x:X,y:[F.raw_off,F.raw_peak],marker:{color:css('--tile'),line:{color:css('--hair'),width:1}},hovertemplate:'%{x}<br>raw %{y:.2f} pp<extra></extra>'},
+    {type:'bar',name:'Same-cell gap',x:X,y:[F.cell_off,F.cell_peak],marker:{color:[css('--off'),css('--peak')]},text:[sg(F.cell_off),sg(F.cell_peak)],textposition:'outside',cliponaxis:false,
+     textfont:{family:'JetBrains Mono, monospace',color:css('--chalk')},hovertemplate:'%{x}<br>same-cell %{y:.2f} pp<extra></extra>'}],
+    base({barmode:'group',bargap:.35,legend:{orientation:'h',y:1.14,x:0,font:{color:css('--dim')}},margin:{l:56,r:16,t:36,b:40},
+      yaxis:{...base().yaxis,title:axTitle('LCC − FSC (pp)'),range:[0,Math.max(F.cell_off,F.cell_peak)*1.3]}}),cfg)}
+const BINS=['<-10%','-10–0%','0–+10%','>+10%'], BINLAB=['10%+ QUIETER','0–10% QUIETER','0–10% BUSIER','10%+ BUSIER'];
+function drawBins(){const cell=BINS.map(b=>F.bins[b].cell),raw=BINS.map(b=>F.bins[b].raw);
+  Plotly.react('pBins',[{type:'bar',name:'Raw gap',x:BINLAB,y:raw,marker:{color:css('--tile'),line:{color:css('--hair'),width:1}},hovertemplate:'%{x}<br>raw %{y:.2f} pp<extra></extra>'},
+    {type:'bar',name:'Same-cell gap',x:BINLAB,y:cell,marker:{color:css('--lcc')},text:cell.map(v=>sg(v)),textposition:'outside',cliponaxis:false,textfont:{family:'JetBrains Mono, monospace',color:css('--chalk')},
+     customdata:BINS.map(b=>(F.bins[b].share*100).toFixed(0)),hovertemplate:'%{x}<br>same-cell %{y:.2f} pp<br>%{customdata}% of flights<extra></extra>'}],
+    base({barmode:'group',bargap:.3,legend:{orientation:'h',y:1.12,x:0,font:{color:css('--dim')}},margin:{l:56,r:16,t:36,b:46},
+      xaxis:{...base().xaxis,title:axTitle('Departure airport vs its usual same weekday')},yaxis:{...base().yaxis,title:axTitle('LCC − FSC (pp)'),range:[0,Math.max(...cell)*1.25]}}),cfg)}
+const sl=document.getElementById('sPI');
+function drawSlider(ev){const pi=+sl.value/100,g=A2.beta+A2.gamma*pi;flapTo(document.getElementById('sOut'),sgF(g)+'PP',!ev||ev.type==='input');
+  document.getElementById('sNote').textContent=`Predicted LCC − FSC gap when the departure airport is ${pi===0?'at its usual level':(pi>0?Math.round(pi*100)+'% busier':Math.abs(Math.round(pi*100))+'% quieter')+' than usual'}. 80% of compared flights fall between ${Math.round(F.pi_pct[0]*100)}% and +${Math.round(F.pi_pct[4]*100)}%.`}
+sl.addEventListener('input',drawSlider);sl.addEventListener('change',e=>{const o=document.getElementById('sOut');o.dataset.cur='';drawSlider(e)});
+let cv=0;
+function drawCar(){const src=cv?F.carrier.pi15:F.carrier.pi0,cs=Object.keys(src).sort((a,b)=>src[a]-src[b]);
+  Plotly.react('pCar',[{type:'bar',orientation:'h',y:cs.map(c=>NAMES[c].toUpperCase()),x:cs.map(c=>src[c]),marker:{color:cs.map(c=>LCC.has(c)?css('--lcc'):css('--fsc'))},
+    text:cs.map(c=>sg(src[c])),textposition:'outside',cliponaxis:false,textfont:{family:'JetBrains Mono, monospace',color:css('--chalk'),size:11},hovertemplate:'%{y}<br>%{x:.2f} pp vs FSC average<extra></extra>'}],
+    base({showlegend:false,margin:{l:96,r:50,t:8,b:40},xaxis:{...base().xaxis,title:axTitle('pp vs FSC average'),range:[-5,11],zeroline:true,zerolinecolor:css('--dim')},
+      yaxis:{...base().yaxis,gridcolor:'rgba(0,0,0,0)',tickfont:{color:css('--chalk'),family:'JetBrains Mono, monospace',size:11}}}),cfg)}
+document.querySelectorAll('[data-cv]').forEach(b=>b.addEventListener('click',()=>{cv=+b.dataset.cv;document.querySelectorAll('[data-cv]').forEach(x=>x.setAttribute('aria-pressed',x===b));drawCar()}));
+let drop='none';
+(function(){const box=document.getElementById('drop');['none','WN','B6','NK','F9','G4','AA','DL','UA','AS'].forEach(c=>{const b=document.createElement('button');b.type='button';
+  b.textContent=c==='none'?'ALL CARRIERS':'WITHOUT '+NAMES[c].toUpperCase();b.style.setProperty('--c',c==='none'?'var(--flap)':LCC.has(c)?'var(--lcc)':'var(--fsc)');b.setAttribute('aria-pressed',c==='none');
+  b.addEventListener('click',()=>{drop=c;box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawDrop()});box.appendChild(b)})})();
+function drawDrop(){const b0=BINS.map(b=>F.bdrop.none[b]),cur=BINS.map(b=>F.bdrop[drop][b]);
+  const tr=[{type:'scatter',mode:'lines+markers',name:'All carriers',x:BINLAB,y:b0,line:{color:css('--dim'),width:2,dash:'dot'},marker:{size:8}}];
+  if(drop!=='none')tr.push({type:'scatter',mode:'lines+markers+text',name:'Without '+NAMES[drop],x:BINLAB,y:cur,line:{color:css('--flap'),width:3},marker:{size:10},text:cur.map(v=>sg(v)),textposition:'top center',textfont:{family:'JetBrains Mono, monospace',color:css('--flap')}});
+  Plotly.react('pDrop',tr,base({legend:{orientation:'h',y:1.15,x:0,font:{color:css('--dim')}},margin:{l:56,r:16,t:36,b:46},yaxis:{...base().yaxis,title:axTitle('Same-cell LCC − FSC (pp)'),rangemode:'tozero'}}),cfg);
+  const L=drop==='none'?null:A2.loo[drop];
+  document.getElementById('dropNote').textContent=drop==='none'?'Pick an airline to remove it and recompute the same-cell gap in each busyness band.'
+    :`Without ${NAMES[drop]}: β = ${sg(L.beta)} pp, γ = ${sg(L.gamma*0.1)} pp per +10% busier (all carriers: ${sg(A2.beta)} and ${sg(A2.gamma*0.1)}).`}
+let outcome='gr';
+function drawScatter(){const P=D.w4.points,f=D.w4.fits[outcome],xs=P.map(p=>p.pi),lo=Math.min(...xs),hi=Math.max(...xs);
+  Plotly.react('pScatter',[{x:xs,y:P.map(p=>p[outcome]),mode:'markers',marker:{size:10,color:P.map(p=>p.peak?css('--peak'):css('--off')),line:{width:1,color:css('--night')}},text:P.map(p=>p.ym),hovertemplate:'%{text}<br>Peak Index %{x:.1f}%<br>Gap %{y:.2f}<extra></extra>'},
+    {x:[lo,hi],y:[f.b0+f.b1*lo,f.b0+f.b1*hi],mode:'lines',line:{color:css('--flap'),width:2,dash:'dash'},hoverinfo:'skip'}],
+    base({showlegend:false,xaxis:{...base().xaxis,title:axTitle('Monthly Peak Index (%)')},yaxis:{...base().yaxis,title:axTitle(outcome==='gr'?'LCC − FSC delay rate (pp)':'LCC − FSC minutes per delayed flight')}}),cfg);
+  document.getElementById('fitText').textContent=outcome==='gr'?'Gap = 4.18 + 0.067 × PI · p = 0.476, R² = 0.015 (n = 36 months, Week 4 report).':'Gap = −10.93 − 0.343 × PI · p = 0.011, R² = 0.177 (n = 36 months, Week 4 report).'}
+[['oRate','gr'],['oMin','gm']].forEach(([id,v],_,all)=>document.getElementById(id).addEventListener('click',()=>{outcome=v;all.forEach(([j])=>document.getElementById(j).setAttribute('aria-pressed',j===id));drawScatter()}));
+document.querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>{if(d.open&&window.Plotly)drawScatter()}));
+
+/* ticket: animate once on first view */
+(function(){const bp=document.querySelector('.bp');if(!bp||reduce)return;
+  new IntersectionObserver((e,ob)=>{if(!e[0].isIntersecting)return;ob.disconnect();bp.classList.add('in');
+    const pl=document.getElementById('bpPlane'),fly=document.getElementById('bpFly');
+    if(fly&&fly.beginElement){pl.setAttribute('transform','');setTimeout(()=>fly.beginElement(),350)}},{threshold:.35}).observe(bp)})();
+drawSlider();
+if(window.Plotly){drawMo();drawMain();drawBins();drawCar();drawDrop()}
+</script>
+</body>
+</html>
